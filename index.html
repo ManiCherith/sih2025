@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicConnect - Issue Reporting System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>CivicConnect</h1>
+                    <span class="tagline">Connecting Citizens & Government</span>
+                </div>
+                <div class="header-actions">
+                    <button id="languageToggle" class="btn btn--outline btn--sm">🌐 EN</button>
+                    <button id="themeToggle" class="btn btn--outline btn--sm">🌙</button>
+                    <button id="backToHome" class="btn btn--secondary btn--sm hidden">← Back to Home</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Landing Page -->
+        <section id="landingPage" class="landing-page">
+            <div class="container">
+                <div class="hero">
+                    <h2>Report. Track. Resolve.</h2>
+                    <p>Help improve your community by reporting civic issues and tracking their resolution.</p>
+                    <div class="role-selection">
+                        <div class="role-card" id="citizenRole">
+                            <div class="role-icon">👥</div>
+                            <h3>I'm a Citizen</h3>
+                            <p>Report issues, track progress, and engage with your community</p>
+                            <button class="btn btn--primary btn--full-width">Get Started</button>
+                        </div>
+                        <div class="role-card" id="adminRole">
+                            <div class="role-icon">🏛️</div>
+                            <h3>I'm an Administrator</h3>
+                            <p>Manage issues, route to departments, and monitor performance</p>
+                            <button class="btn btn--primary btn--full-width">Access Dashboard</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-overview">
+                    <div class="stat-item">
+                        <span class="stat-number">1,247</span>
+                        <span class="stat-label">Issues Reported</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">1,089</span>
+                        <span class="stat-label">Issues Resolved</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">2.8 days</span>
+                        <span class="stat-label">Avg Resolution Time</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">4.2★</span>
+                        <span class="stat-label">Citizen Satisfaction</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Citizen Interface -->
+        <section id="citizenInterface" class="interface hidden">
+            <div class="container">
+                <div class="interface-header">
+                    <h2>Citizen Dashboard</h2>
+                    <div class="tab-navigation">
+                        <button class="tab-btn active" data-tab="report">Report Issue</button>
+                        <button class="tab-btn" data-tab="track">My Reports</button>
+                        <button class="tab-btn" data-tab="map">Community Map</button>
+                        <button class="tab-btn" data-tab="engage">Community</button>
+                    </div>
+                </div>
+
+                <!-- Report Issue Tab -->
+                <div id="reportTab" class="tab-content active">
+                    <div class="card">
+                        <div class="card__body">
+                            <h3>Report a New Issue</h3>
+                            <form id="issueReportForm" class="issue-report-form">
+                                <div class="form-group">
+                                    <label class="form-label">Issue Category</label>
+                                    <select id="issueCategory" class="form-control" required>
+                                        <option value="">Select category</option>
+                                        <option value="potholes">Potholes & Road Issues</option>
+                                        <option value="streetlights">Streetlights</option>
+                                        <option value="garbage">Garbage & Waste</option>
+                                        <option value="drainage">Drainage Issues</option>
+                                        <option value="traffic">Traffic & Signals</option>
+                                        <option value="vandalism">Vandalism</option>
+                                        <option value="noise">Noise Complaints</option>
+                                        <option value="parks">Parks & Recreation</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" id="issueTitle" class="form-control" placeholder="Brief description of the issue" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <textarea id="issueDescription" class="form-control" rows="4" placeholder="Provide detailed information about the issue" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" id="issueLocation" class="form-control" placeholder="Street address or landmark" required>
+                                    <button type="button" id="useGPSLocation" class="btn btn--outline btn--sm mt-8">📍 Use My Location</button>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Priority Level</label>
+                                    <select id="issuePriority" class="form-control" required>
+                                        <option value="low">Low - Can wait a few weeks</option>
+                                        <option value="medium" selected>Medium - Should be addressed soon</option>
+                                        <option value="high">High - Needs prompt attention</option>
+                                        <option value="urgent">Urgent - Safety hazard</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Photo (Optional)</label>
+                                    <div class="photo-upload">
+                                        <input type="file" id="issuePhoto" accept="image/*" class="hidden">
+                                        <button type="button" id="photoUploadBtn" class="btn btn--outline">📷 Add Photo</button>
+                                        <div id="photoPreview" class="photo-preview hidden"></div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn--primary btn--full-width">Submit Report</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Track Reports Tab -->
+                <div id="trackTab" class="tab-content">
+                    <div class="reports-header">
+                        <h3>My Reports</h3>
+                        <div class="filter-controls">
+                            <select id="statusFilter" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="submitted">Submitted</option>
+                                <option value="assigned">Assigned</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="myReportsList" class="reports-list"></div>
+                </div>
+
+                <!-- Community Map Tab -->
+                <div id="mapTab" class="tab-content">
+                    <div class="map-controls">
+                        <h3>Community Issues Map</h3>
+                        <div class="map-filters">
+                            <select id="mapCategoryFilter" class="form-control">
+                                <option value="">All Categories</option>
+                                <option value="potholes">Potholes</option>
+                                <option value="streetlights">Streetlights</option>
+                                <option value="garbage">Garbage</option>
+                                <option value="drainage">Drainage</option>
+                                <option value="traffic">Traffic</option>
+                                <option value="vandalism">Vandalism</option>
+                                <option value="noise">Noise</option>
+                                <option value="parks">Parks</option>
+                            </select>
+                            <button id="toggleHeatmap" class="btn btn--outline">🔥 Heat Map</button>
+                        </div>
+                    </div>
+                    <div id="communityMap" class="map-container">
+                        <div class="map-placeholder">
+                            <div class="map-legend">
+                                <h4>Issue Status Legend</h4>
+                                <div class="legend-item"><span class="legend-dot submitted"></span> Submitted</div>
+                                <div class="legend-item"><span class="legend-dot assigned"></span> Assigned</div>
+                                <div class="legend-item"><span class="legend-dot in-progress"></span> In Progress</div>
+                                <div class="legend-item"><span class="legend-dot resolved"></span> Resolved</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Community Engagement Tab -->
+                <div id="engageTab" class="tab-content">
+                    <h3>Community Engagement</h3>
+                    <div id="communityIssues" class="community-issues"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Administrator Interface -->
+        <section id="adminInterface" class="interface hidden">
+            <div class="container">
+                <div class="interface-header">
+                    <h2>Administrator Dashboard</h2>
+                    <div class="tab-navigation">
+                        <button class="tab-btn active" data-tab="overview">Overview</button>
+                        <button class="tab-btn" data-tab="manage">Manage Issues</button>
+                        <button class="tab-btn" data-tab="departments">Departments</button>
+                        <button class="tab-btn" data-tab="analytics">Analytics</button>
+                        <button class="tab-btn" data-tab="admin-map">Map View</button>
+                    </div>
+                </div>
+
+                <!-- Overview Tab -->
+                <div id="overviewTab" class="tab-content active">
+                    <div class="dashboard-overview">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="totalIssuesMetric">0</div>
+                                <div class="metric-label">Total Issues</div>
+                                <div class="metric-change positive">+12% this month</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="pendingIssuesMetric">0</div>
+                                <div class="metric-label">Pending Issues</div>
+                                <div class="metric-change negative">-8% from last week</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="avgResponseMetric">0</div>
+                                <div class="metric-label">Avg Response Time</div>
+                                <div class="metric-change positive">-15% improvement</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="satisfactionMetric">0</div>
+                                <div class="metric-label">Satisfaction Rating</div>
+                                <div class="metric-change positive">+0.2 this month</div>
+                            </div>
+                        </div>
+                        <div class="charts-grid">
+                            <div class="chart-container" style="position: relative; height: 300px;">
+                                <canvas id="trendsChart"></canvas>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 300px;">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manage Issues Tab -->
+                <div id="manageTab" class="tab-content">
+                    <div class="manage-header">
+                        <h3>Issue Management</h3>
+                        <div class="manage-controls">
+                            <input type="text" id="searchIssues" class="form-control" placeholder="Search issues...">
+                            <select id="categoryFilterAdmin" class="form-control">
+                                <option value="">All Categories</option>
+                                <option value="potholes">Potholes</option>
+                                <option value="streetlights">Streetlights</option>
+                                <option value="garbage">Garbage</option>
+                                <option value="drainage">Drainage</option>
+                                <option value="traffic">Traffic</option>
+                                <option value="vandalism">Vandalism</option>
+                                <option value="noise">Noise</option>
+                                <option value="parks">Parks</option>
+                            </select>
+                            <select id="statusFilterAdmin" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="submitted">Submitted</option>
+                                <option value="assigned">Assigned</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                            <button id="exportData" class="btn btn--outline">📊 Export</button>
+                        </div>
+                    </div>
+                    <div id="issuesTable" class="issues-table"></div>
+                </div>
+
+                <!-- Departments Tab -->
+                <div id="departmentsTab" class="tab-content">
+                    <h3>Department Management</h3>
+                    <div id="departmentsList" class="departments-list"></div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analyticsTab" class="tab-content">
+                    <h3>Analytics & Reports</h3>
+                    <div class="analytics-dashboard">
+                        <div class="analytics-controls">
+                            <select class="form-control">
+                                <option>Last 30 Days</option>
+                                <option>Last 90 Days</option>
+                                <option>Last Year</option>
+                            </select>
+                            <button class="btn btn--outline">Generate Report</button>
+                        </div>
+                        <div class="analytics-grid">
+                            <div class="chart-container" style="position: relative; height: 400px;">
+                                <canvas id="detailedTrendsChart"></canvas>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 400px;">
+                                <canvas id="departmentPerformanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Map Tab -->
+                <div id="adminMapTab" class="tab-content">
+                    <div class="admin-map-controls">
+                        <h3>Administrative Map View</h3>
+                        <div class="map-tools">
+                            <button class="btn btn--outline">🎯 Issue Density</button>
+                            <button class="btn btn--outline">🏢 Department Zones</button>
+                            <button class="btn btn--outline">⚡ Real-time Updates</button>
+                        </div>
+                    </div>
+                    <div id="adminMap" class="map-container admin-map"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="issueModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Issue Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--secondary modal-close">Close</button>
+                <button id="modalActionBtn" class="btn btn--primary">Update Status</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
