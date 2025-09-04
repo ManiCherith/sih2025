@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CivicConnect - Issue Reporting System</title>
+    <title>MadMaxPrototype1 - Issue Reporting System</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
@@ -57,7 +57,20 @@
                             <button class="btn btn--primary btn--full-width">Access Dashboard</button>
                         </div>
                     </div>
+     </section>
+                        <form id="citizenLoginForm" class="hidden" style="margin-top: 20px;">
+                              <input type="email" id="citizenEmail" placeholder="Email">
+                            <input type="password" id="citizenPassword" placeholder="Password">
+                          <button type="submit">Citizen Login</button>
+                      </form>
+
+      <form id="adminLoginForm" class="hidden" style="margin-top: 20px;">
+        <input type="email" id="adminEmail" placeholder="Email">
+        <input type="password" id="adminPassword" placeholder="Password">
+        <button type="submit">Admin Login</button>
+      </form>
                 </div>
+
                 
                 <div class="stats-overview">
                     <div class="stat-item">

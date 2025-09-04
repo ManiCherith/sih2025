@@ -1,5 +1,7 @@
 .env
 
+.pem
+
 .env.*
 
 node_modules/
@@ -15,3 +17,5 @@ coverage/
 .idea/
 
 .vscode/
+
+/generated/prisma

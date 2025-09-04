@@ -1,4 +1,5 @@
 // CivicConnect Application JavaScript
+console.log('app.js loaded');
 
 class CivicConnectApp {
     constructor() {
@@ -146,23 +147,52 @@ _renderIssueMarkers(map) {
     }
 
     setupEventListeners() {
+
         // Use event delegation for all clicks on document
         document.addEventListener('click', (e) => {
             // Handle role selection buttons - check if clicked element or its parent is a role card or button within it
             const citizenCard = e.target.closest('#citizenRole');
             const adminCard = e.target.closest('#adminRole');
             
-            if (citizenCard) {
-                console.log('Citizen role selected');
-                this.selectRole('citizen');
-                return;
-            }
-            
-            if (adminCard) {
-                console.log('Admin role selected');
-                this.selectRole('admin');
-                return;
-            }
+           if (citizenCard) {
+   console.log('[LOG] Citizen role clicked');
+  this.selectRole('citizen');
+  return;
+}
+
+if (adminCard) {
+  console.log('[LOG] Admin role clicked');
+  this.selectRole('admin');
+  return;
+}
+
+            const citizenLoginForm = document.getElementById('citizenLoginForm');
+  if (citizenLoginForm) {
+    citizenLoginForm.addEventListener('submit', async (e) => {
+      e.preventDefault(); // Prevent page reload on submit
+      const email = document.getElementById('citizenEmail').value;
+      const password = document.getElementById('citizenPassword').value;
+      try {
+        await this.login(email, password, 'citizen');
+      } catch (err) {
+        this.showNotification(err.message || 'Login failed', 'error');
+      }
+    });
+  }
+
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value;
+      const password = document.getElementById('adminPassword').value;
+      try {
+        await this.login(email, password, 'admin');
+      } catch (err) {
+        this.showNotification(err.message || 'Login failed', 'error');
+      }
+    });
+  }
 
             // Tab navigation
             if (e.target.classList.contains('tab-btn')) {
@@ -274,46 +304,98 @@ _renderIssueMarkers(map) {
             toggleHeatmap.addEventListener('click', () => this.toggleHeatmap());
         }
     }
+selectRole(role) {
+  this.currentRole = role;
+  console.log(`[LOG] selectRole called with role: ${role}`);
 
-    selectRole(role) {
-        console.log('Selecting role:', role);
-        this.currentRole = role;
-        
-        const landingPage = document.getElementById('landingPage');
-        const citizenInterface = document.getElementById('citizenInterface');
-        const adminInterface = document.getElementById('adminInterface');
-        const backToHome = document.getElementById('backToHome');
-        
-        if (landingPage) landingPage.classList.add('hidden');
-        if (backToHome) backToHome.classList.remove('hidden');
-        
-        if (role === 'citizen') {
-            if (citizenInterface) citizenInterface.classList.remove('hidden');
-            if (adminInterface) adminInterface.classList.add('hidden');
-            this.switchTab('report');
-        } else {
-            if (adminInterface) adminInterface.classList.remove('hidden');
-            if (citizenInterface) citizenInterface.classList.add('hidden');
-            this.switchTab('overview');
-            this.loadAdminDashboard();
-        }
-        
-        this.showNotification(`Welcome to ${role === 'citizen' ? 'Citizen' : 'Administrator'} interface!`, 'success');
+  const landingPage = document.getElementById('landingPage');
+  if (landingPage) landingPage.classList.add('hidden');
+
+  document.getElementById('citizenLoginForm').classList.add('hidden');
+  document.getElementById('adminLoginForm').classList.add('hidden');
+
+  if (role === 'citizen') {
+    document.getElementById('citizenLoginForm').classList.remove('hidden');
+  } else if (role === 'admin') {
+    document.getElementById('adminLoginForm').classList.remove('hidden');
+  }
+
+  document.getElementById('citizenInterface').classList.add('hidden');
+  document.getElementById('adminInterface').classList.add('hidden');
+
+  const backToHome = document.getElementById('backToHome');
+  if (backToHome) backToHome.classList.add('hidden');
+}
+
+
+   showLandingPage() {
+  this.currentRole = null;
+
+  const landingPage = document.getElementById('landingPage');
+  if (landingPage) landingPage.classList.remove('hidden');
+
+  const citizenLoginForm = document.getElementById('citizenLoginForm');
+  if (citizenLoginForm) citizenLoginForm.classList.add('hidden');
+
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  if (adminLoginForm) adminLoginForm.classList.add('hidden');
+
+  const citizenInterface = document.getElementById('citizenInterface');
+  if (citizenInterface) citizenInterface.classList.add('hidden');
+
+  const adminInterface = document.getElementById('adminInterface');
+  if (adminInterface) adminInterface.classList.add('hidden');
+
+
+  const backToHome = document.getElementById('backToHome');
+  if (backToHome) backToHome.classList.add('hidden');
+}
+
+ async login(email, password, role) {
+  try {
+    const res = await fetch('https://localhost:3443/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',  
+      body: JSON.stringify({ email, password, role }),
+    });
+
+    if (!res.ok) {
+      
+      const errorData = await res.json().catch(() => ({}));
+      const msg = errorData.message || 'Login failed. Please try again.';
+      throw new Error(msg);
     }
 
-    showLandingPage() {
-        this.currentRole = null;
-        
-        const landingPage = document.getElementById('landingPage');
-        const citizenInterface = document.getElementById('citizenInterface');
-        const adminInterface = document.getElementById('adminInterface');
-        const backToHome = document.getElementById('backToHome');
-        
-        if (landingPage) landingPage.classList.remove('hidden');
-        if (citizenInterface) citizenInterface.classList.add('hidden');
-        if (adminInterface) adminInterface.classList.add('hidden');
-        if (backToHome) backToHome.classList.add('hidden');
+    const data = await res.json();
+
+    this.accessToken = data.accessToken;  
+    this.currentRole = role;
+
+    
+    document.getElementById('citizenLoginForm').classList.add('hidden');
+    document.getElementById('adminLoginForm').classList.add('hidden');
+
+    
+    if (role === 'citizen') {
+      document.getElementById('citizenInterface').classList.remove('hidden');
+    } else if (role === 'admin') {
+      document.getElementById('adminInterface').classList.remove('hidden');
     }
+
+    
+    const backToHome = document.getElementById('backToHome');
+    if (backToHome) backToHome.classList.remove('hidden');
+
+    this.showNotification('Logged in successfully!', 'success');
+  } catch (error) {
+    this.showNotification(error.message, 'error');
+    throw error;  
+  }
+}
+
+
+
 
     switchTab(tabName) {
     console.log('Switching to tab:', tabName);
