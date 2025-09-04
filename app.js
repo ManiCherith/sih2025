@@ -21,11 +21,25 @@ class CivicConnectApp {
         this.setupTheme();
         this.startRealTimeUpdates();
     }
+_renderIssueMarkers(map) {
+    if (this._issueMarkersLayer) {
+        this._issueMarkersLayer.clearLayers();
+    } else {
+        this._issueMarkersLayer = L.layerGroup().addTo(map);
+    }
+
+    this.issues.forEach(issue => {
+        if (!issue.coordinates) return;
+        const [lat, lng] = issue.coordinates;
+        const marker = L.marker([lat, lng])
+            .bindPopup(`<strong>${issue.title}</strong><br>${issue.location}<br>Status: ${this.formatStatus(issue.status)}`);
+        this._issueMarkersLayer.addLayer(marker);
+    });
+}
 
     loadSampleData() {
         // Load sample issues
         this.issues = [];
-        ];
 
         // Generate additional sample issues for better demonstration
         this.generateAdditionalIssues();
@@ -302,29 +316,43 @@ class CivicConnectApp {
     }
 
     switchTab(tabName) {
-        console.log('Switching to tab:', tabName);
-        this.currentTab = tabName;
-        
-        // Update tab buttons
-        const uiScope= this.currentRole === 'citizen' ? 'citizenInterface' : 'adminInterface';
-        const tabBtns = document.querySelectorAll(`#${uiScope} .tab-btn`);
-        const tabContents = document.querySelectorAll(`#${uiScope} .tab-content`);
-        
-        tabBtns.forEach(btn => btn.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-        
-        const activeTabBtn = document.querySelector(`#${uiScope} [data-tab="${tabName}"]`);
-        if (activeTabBtn) {
-            activeTabBtn.classList.add('active');
+    console.log('Switching to tab:', tabName);
+    this.currentTab = tabName;
+    
+    // Update tab buttons
+    const uiScope = this.currentRole === 'citizen' ? 'citizenInterface' : 'adminInterface';
+    const tabBtns = document.querySelectorAll(`#${uiScope} .tab-btn`);
+    const tabContents = document.querySelectorAll(`#${uiScope} .tab-content`);
+    
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+    
+    const activeTabBtn = document.querySelector(`#${uiScope} [data-tab="${tabName}"]`);
+    if (activeTabBtn) {
+        activeTabBtn.classList.add('active');
+    }
+    
+    if (this.currentRole === 'citizen') {
+        this.loadCitizenTab(tabName);
+    } else {
+        this.loadAdminTab(tabName);
+    }
+
+    if (this.currentRole === 'citizen') {
+        if (tabName === 'map') {
+            this.loadCommunityMap();
         }
-        
-        // Show appropriate content
-        if (this.currentRole === 'citizen') {
-            this.loadCitizenTab(tabName);
-        } else {
-            this.loadAdminTab(tabName);
+    } else {
+        if (tabName === 'admin-map') {
+            this.loadAdminMap();
         }
     }
+    if (this._adminMap) {
+  this._adminMap.invalidateSize();
+}
+
+}
+
 
     loadCitizenTab(tabName) {
         const tabElement = document.getElementById(`${tabName}Tab`);
@@ -504,13 +532,35 @@ class CivicConnectApp {
             </div>
         `).join('');
     }
+      loadAdminMap() {
+        console.log('Admin map loading...')
+  const mapContainer = document.getElementById('adminMap');
+  if (!mapContainer || typeof L === 'undefined') return;
+
+  if (!this._adminMap) {
+    this._adminMap = L.map('adminMap').setView([23.35, 85.33], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(this._adminMap);
+  }
+
+  this._renderIssueMarkers(this._adminMap);
+}
 
     loadCommunityMap() {
-        const mapContainer = document.getElementById('communityMap');
-        if (mapContainer) {
-            this.showNotification('Map loaded with ' + this.issues.length + ' community issues', 'info');
-        }
-    }
+  const mapContainer = document.getElementById('communityMap');
+  if (!mapContainer || typeof L === 'undefined') return;
+
+  if (!this._communityMap) {
+    this._communityMap = L.map('communityMap').setView([23.35, 85.33], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(this._communityMap);
+  }
+
+  this._renderIssueMarkers(this._communityMap);
+}
+
 
     loadCommunityIssues() {
         const container = document.getElementById('communityIssues');
@@ -811,12 +861,7 @@ class CivicConnectApp {
         }
     }
 
-    loadAdminMap() {
-        const mapContainer = document.getElementById('adminMap');
-        if (mapContainer) {
-            this.showNotification('Administrative map loaded with heat map and zone overlays', 'info');
-        }
-    }
+
 
     showIssueModal(issueId) {
         const issue = this.issues.find(i => i.id === issueId);

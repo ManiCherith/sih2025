@@ -6,6 +6,17 @@
     <title>CivicConnect - Issue Reporting System</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  crossorigin=""
+  />
+ <script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  crossorigin=""
+  defer
+  ></script>
+
 </head>
 <body>
     <!-- Navigation Header -->
@@ -13,7 +24,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1>CivicConnect</h1>
+                    <h1>MMP1</h1>
                     <span class="tagline">Connecting Citizens & Government</span>
                 </div>
                 <div class="header-actions">
@@ -171,7 +182,7 @@
                                 <option value="noise">Noise</option>
                                 <option value="parks">Parks</option>
                             </select>
-                            <button id="toggleHeatmap" class="btn btn--outline">🔥 Heat Map</button>
+                            <button id="toggleHeatmap" class="btn btn--outline">Click here Heat Map</button>
                         </div>
                     </div>
                     <div id="communityMap" class="map-container">
@@ -304,18 +315,38 @@
                     </div>
                 </div>
 
-                <!-- Admin Map Tab -->
-                <div id="adminMapTab" class="tab-content">
-                    <div class="admin-map-controls">
-                        <h3>Administrative Map View</h3>
-                        <div class="map-tools">
-                            <button class="btn btn--outline">🎯 Issue Density</button>
-                            <button class="btn btn--outline">🏢 Department Zones</button>
-                            <button class="btn btn--outline">⚡ Real-time Updates</button>
+                <!-- Community Map Tab -->
+                <div id="admin-mapTab" class="tab-content">
+                    <div class="map-controls">
+                        <h3>Admin Map</h3>
+                        <div class="map-filters">
+                            <select id="mapCategoryFilter" class="form-control">
+                                <option value="">All Categories</option>
+                                <option value="potholes">Potholes</option>
+                                <option value="streetlights">Streetlights</option>
+                                <option value="garbage">Garbage</option>
+                                <option value="drainage">Drainage</option>
+                                <option value="traffic">Traffic</option>
+                                <option value="vandalism">Vandalism</option>
+                                <option value="noise">Noise</option>
+                                <option value="parks">Parks</option>
+                            </select>
+                            <button id="toggleHeatmap" class="btn btn--outline">Click here Heat Map</button>
                         </div>
                     </div>
-                    <div id="adminMap" class="map-container admin-map"></div>
+                    <div id="adminMap" class="map-container">
+                        <div class="map-placeholder">
+                            <div class="map-legend">
+                                <h4>Issue Status Legend</h4>
+                                <div class="legend-item"><span class="legend-dot submitted"></span> Submitted</div>
+                                <div class="legend-item"><span class="legend-dot assigned"></span> Assigned</div>
+                                <div class="legend-item"><span class="legend-dot in-progress"></span> In Progress</div>
+                                <div class="legend-item"><span class="legend-dot resolved"></span> Resolved</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </section>
     </main>
