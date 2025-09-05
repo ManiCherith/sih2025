@@ -1674,15 +1674,22 @@ select.form-control {
 --------------------------------------------- */
 
 /* Container that centers the form vertically and horizontally */
+/* Login modal wrapper — hidden by default */
 .login-wrapper {
-  width: 100vw;
-  height: 100vh;
-  display: flex; 
-  justify-content: center;
-  align-items: center;
-  background-color: var(--color-background);
-  z-index: 200;
+  display: none;                  /* don't take space unless active */
 }
+
+/* Shown only when we add .active from JS */
+.login-wrapper.active {
+  position: fixed;
+  inset: 0;                       /* top:0; right:0; bottom:0; left:0 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);    /* dim overlay */
+  z-index: 1000;
+}
+body.modal-open { overflow: hidden; }
 
 /* Login form card styling */
 .login-card {

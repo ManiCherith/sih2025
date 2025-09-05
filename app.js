@@ -326,52 +326,52 @@ if (adminCard) {
     }
 selectRole(role) {
   this.currentRole = role;
-  console.log(`[LOG] selectRole called with role: ${role}`);
 
   const landingPage = document.getElementById('landingPage');
   if (landingPage) landingPage.classList.add('hidden');
 
-  document.getElementById('citizenLoginForm').classList.add('hidden');
-  document.getElementById('adminLoginForm').classList.add('hidden');
+  const citizenForm = document.getElementById('citizenLoginForm');
+  const adminForm   = document.getElementById('adminLoginForm');
+  const citizenWrap = citizenForm ? citizenForm.parentElement : null;
+  const adminWrap   = adminForm ? adminForm.parentElement   : null;
 
+  // hide both forms + wrappers first
+  citizenForm?.classList.add('hidden');
+  adminForm?.classList.add('hidden');
+  citizenWrap?.classList.remove('active');
+  adminWrap?.classList.remove('active');
+
+  // show the chosen one
   if (role === 'citizen') {
-    document.getElementById('citizenLoginForm').classList.remove('hidden');
+    citizenForm?.classList.remove('hidden');
+    citizenWrap?.classList.add('active');
   } else if (role === 'admin') {
-    document.getElementById('adminLoginForm').classList.remove('hidden');
+    adminForm?.classList.remove('hidden');
+    adminWrap?.classList.add('active');
   }
 
-  document.getElementById('citizenInterface').classList.add('hidden');
-  document.getElementById('adminInterface').classList.add('hidden');
-
-  const backToHome = document.getElementById('backToHome');
-  if (backToHome) backToHome.classList.add('hidden');
+  document.body.classList.add('modal-open');
 }
 
 
    showLandingPage() {
   this.currentRole = null;
 
-  const landingPage = document.getElementById('landingPage');
-  if (landingPage) landingPage.classList.remove('hidden');
+  document.getElementById('landingPage')?.classList.remove('hidden');
 
-const citizenLoginForm = document.getElementById('citizenLoginForm');
-if (citizenLoginForm) citizenLoginForm.classList.add('hidden');
+  const citizenForm = document.getElementById('citizenLoginForm');
+  const adminForm   = document.getElementById('adminLoginForm');
 
+  citizenForm?.classList.add('hidden');
+  adminForm?.classList.add('hidden');
+  citizenForm?.parentElement?.classList.remove('active');
+  adminForm?.parentElement?.classList.remove('active');
 
-const adminLoginForm = document.getElementById('adminLoginForm');
-if (adminLoginForm) adminLoginForm.classList.add('hidden');
+  document.getElementById('citizenInterface')?.classList.add('hidden');
+  document.getElementById('adminInterface')?.classList.add('hidden');
 
-
-
-  const citizenInterface = document.getElementById('citizenInterface');
-  if (citizenInterface) citizenInterface.classList.add('hidden');
-
-  const adminInterface = document.getElementById('adminInterface');
-  if (adminInterface) adminInterface.classList.add('hidden');
-
-
-  const backToHome = document.getElementById('backToHome');
-  if (backToHome) backToHome.classList.add('hidden');
+  document.getElementById('backToHome')?.classList.add('hidden');
+  document.body.classList.remove('modal-open');
 }
 
  async login(email, password, role) {
@@ -399,14 +399,17 @@ if (adminLoginForm) adminLoginForm.classList.add('hidden');
     
     document.getElementById('citizenLoginForm').classList.add('hidden');
     document.getElementById('adminLoginForm').classList.add('hidden');
-
+document.getElementById('landingPage')?.classList.add('hidden');
     
     if (role === 'citizen') {
       document.getElementById('citizenInterface').classList.remove('hidden');
     } else if (role === 'admin') {
       document.getElementById('adminInterface').classList.remove('hidden');
     }
+document.getElementById('citizenLoginForm')?.parentElement?.classList.remove('active');
+document.getElementById('adminLoginForm')?.parentElement?.classList.remove('active');
 
+document.body.classList.remove('modal-open');
     
     const backToHome = document.getElementById('backToHome');
     if (backToHome) backToHome.classList.remove('hidden');
