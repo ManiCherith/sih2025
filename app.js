@@ -18,6 +18,7 @@ class CivicConnectApp {
     init() {
         this.loadSampleData();
         this.setupEventListeners();
+        this.setupNavigationHistory();
         this.showLandingPage();
         this.setupTheme();
         this.startRealTimeUpdates();
@@ -365,30 +366,35 @@ if (showLoginLink) {
 
     }
 selectRole(role) {
-  this.currentRole = role;
+    if (!window.history.state || window.history.state.page !== 'landing') {
+        window.history.pushState({page: 'landing'}, 'CivicConnect', '/');
+    }
+    
+    this.currentRole = role;
+    const landingPage = document.getElementById('landingPage');
+    if (landingPage) landingPage.classList.add('hidden');
 
-  const landingPage = document.getElementById('landingPage');
-  if (landingPage) landingPage.classList.add('hidden');
+    const citizenForm = document.getElementById('citizenLoginForm');
+    const adminForm = document.getElementById('adminLoginForm');
+    const citizenWrap = citizenForm ? citizenForm.parentElement : null;
+    const adminWrap = adminForm ? adminForm.parentElement : null;
 
-  const citizenForm = document.getElementById('citizenLoginForm');
-  const adminForm   = document.getElementById('adminLoginForm');
-  const citizenWrap = citizenForm ? citizenForm.parentElement : null;
-  const adminWrap   = adminForm ? adminForm.parentElement   : null;
+    citizenForm?.classList.add('hidden');
+    adminForm?.classList.add('hidden');
+    citizenWrap?.classList.remove('active');
+    adminWrap?.classList.remove('active');
 
-  citizenForm?.classList.add('hidden');
-  adminForm?.classList.add('hidden');
-  citizenWrap?.classList.remove('active');
-  adminWrap?.classList.remove('active');
-  if (role === 'citizen') {
-    citizenForm?.classList.remove('hidden');
-    citizenWrap?.classList.add('active');
-  } else if (role === 'admin') {
-    adminForm?.classList.remove('hidden');
-    adminWrap?.classList.add('active');
-  }
+    if (role === 'citizen') {
+        citizenForm?.classList.remove('hidden');
+        citizenWrap?.classList.add('active');
+    } else if (role === 'admin') {
+        adminForm?.classList.remove('hidden');
+        adminWrap?.classList.add('active');
+    }
 
-  document.body.classList.add('modal-open');
+    document.body.classList.add('modal-open');
 }
+
 
 
 showLandingPage() {
@@ -431,9 +437,17 @@ showLandingPage() {
     }
 
     const data = await res.json();
-
     this.accessToken = data.accessToken;  
     this.currentRole = role;
+
+    const defaultTab = role === 'citizen' ? 'report' : 'overview';
+window.history.pushState({
+    page: 'dashboard', 
+    role: role, 
+    tab: defaultTab
+}, 'Dashboard', window.location.href);
+
+this.currentTab = defaultTab;
 
     
     document.getElementById('citizenLoginForm').classList.add('hidden');
@@ -513,6 +527,7 @@ async handleSignup(email, password, confirmPassword) {
     this.showNotification('Account created successfully! Please login.', 'success');
     
     document.getElementById('citizenSignupWrapper')?.classList.remove('active');
+    window.history.pushState({page: 'landing'}, 'CivicConnect', '/');
     this.selectRole('citizen');
     
     const loginEmail = document.getElementById('citizenEmail');
@@ -524,24 +539,39 @@ async handleSignup(email, password, confirmPassword) {
     errorElement.textContent = error.message;
   }
 }
-
-    switchTab(tabName) {
-    console.log('Switching to tab:', tabName);
+setupNavigationHistory() {
+    window.addEventListener('popstate', (event) => {
+        console.log('Navigation event:', event.state);
+        
+        if (event.state) {
+            if (event.state.page === 'landing') {
+                this.showLandingPage();
+            } else if (event.state.page === 'login') {
+                this.selectRole(event.state.role);
+            } else if (event.state.page === 'dashboard' && event.state.tab) {
+                this.switchTabWithoutHistory(event.state.tab);
+            }
+        } else {
+            this.showLandingPage();
+        }
+    });
+}
+switchTabWithoutHistory(tabName) {
+    console.log('Switching to tab without history:', tabName);
     this.currentTab = tabName;
-    
-    // Update tab buttons
+
     const uiScope = this.currentRole === 'citizen' ? 'citizenInterface' : 'adminInterface';
     const tabBtns = document.querySelectorAll(`#${uiScope} .tab-btn`);
     const tabContents = document.querySelectorAll(`#${uiScope} .tab-content`);
-    
+
     tabBtns.forEach(btn => btn.classList.remove('active'));
     tabContents.forEach(content => content.classList.remove('active'));
-    
+
     const activeTabBtn = document.querySelector(`#${uiScope} [data-tab="${tabName}"]`);
     if (activeTabBtn) {
         activeTabBtn.classList.add('active');
     }
-    
+
     if (this.currentRole === 'citizen') {
         this.loadCitizenTab(tabName);
     } else {
@@ -557,11 +587,61 @@ async handleSignup(email, password, confirmPassword) {
             this.loadAdminMap();
         }
     }
+
     if (this._adminMap) {
-  this._adminMap.invalidateSize();
+        this._adminMap.invalidateSize();
+    }
 }
 
+
+
+switchTab(tabName) {
+    console.log('Switching to tab:', tabName);
+    this.currentTab = tabName;
+
+    // Add tab navigation to browser history
+    const currentState = window.history.state || {};
+    window.history.pushState({
+        ...currentState,
+        page: 'dashboard',
+        role: this.currentRole,
+        tab: tabName
+    }, `${tabName} - CivicConnect`, window.location.href);
+
+    const uiScope = this.currentRole === 'citizen' ? 'citizenInterface' : 'adminInterface';
+    const tabBtns = document.querySelectorAll(`#${uiScope} .tab-btn`);
+    const tabContents = document.querySelectorAll(`#${uiScope} .tab-content`);
+
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+
+    const activeTabBtn = document.querySelector(`#${uiScope} [data-tab="${tabName}"]`);
+    if (activeTabBtn) {
+        activeTabBtn.classList.add('active');
+    }
+
+    if (this.currentRole === 'citizen') {
+        this.loadCitizenTab(tabName);
+    } else {
+        this.loadAdminTab(tabName);
+    }
+
+    if (this.currentRole === 'citizen') {
+        if (tabName === 'map') {
+            this.loadCommunityMap();
+        }
+    } else {
+        if (tabName === 'admin-map') {
+            this.loadAdminMap();
+        }
+    }
+
+    if (this._adminMap) {
+        this._adminMap.invalidateSize();
+    }
 }
+
+   
 
 
     loadCitizenTab(tabName) {

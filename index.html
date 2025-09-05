@@ -433,5 +433,12 @@
     <div id="notificationContainer" class="notification-container"></div>
 
     <script src="app.js"></script>
+   <script>
+window.addEventListener('load', function() {
+    if (window.history.length === 1) {
+        window.history.pushState({page: 'landing'}, 'CivicConnect', window.location.href);
+    }
+});
+</script>
 </body>
 </html>
