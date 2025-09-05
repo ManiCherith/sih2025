@@ -44,12 +44,16 @@
                     <h2>Report. Track. Resolve.</h2>
                     <p>Help improve your community by reporting civic issues and tracking their resolution.</p>
                     <div class="role-selection">
-                        <div class="role-card" id="citizenRole">
-                            <div class="role-icon">👥</div>
-                            <h3>I'm a Citizen</h3>
-                            <p>Report issues, track progress, and engage with your community</p>
-                            <button class="btn btn--primary btn--full-width">Get Started</button>
-                        </div>
+                        <div class="role-card">
+  <div class="role-icon">👤</div>
+  <h3>I'm a Citizen</h3>
+  <p>Report issues, track progress, and engage with your community</p>
+  <div style="display: flex; gap: 12px; justify-content: center;">
+    <button class="btn btn--primary" id="citizenLoginBtn">Login</button>
+    <button class="btn btn--outline" id="citizenSignupBtn">Sign Up</button>
+  </div>
+</div>
+
                         <div class="role-card" id="adminRole">
                             <div class="role-icon">🏛️</div>
                             <h3>I'm an Administrator</h3>
@@ -91,6 +95,7 @@
   </form>
 </div>
 
+
 <div class="login-wrapper">
   <form id="adminLoginForm" class="login-card hidden">
     <h2>ADMIN LOGIN</h2>
@@ -106,6 +111,30 @@
     <div id="loginErrorAdmin" class="error-message"></div>
   </form>
 </div>
+<div class="login-wrapper" id="citizenSignupWrapper">
+  <div id="citizenSignupForm" class="login-card">
+    <h2>Citizen Signup</h2>
+    <form>
+      <label for="signupEmail" class="screen-reader-only">Email</label>
+      <input type="email" id="signupEmail" placeholder="Email" required />
+      
+      <label for="signupPassword" class="screen-reader-only">Password</label>
+      <input type="password" id="signupPassword" placeholder="Password (min 12 characters)" minlength="12" required />
+      
+      <label for="signupConfirmPassword" class="screen-reader-only">Confirm Password</label>
+      <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" minlength="12" required />
+      
+      <button type="submit" class="login-btn">Sign Up</button>
+    </form>
+    
+    <div class="login-extras">
+      <a href="#" id="showCitizenLogin" class="forgot-link">Already have an account? Login</a>
+    </div>
+    
+    <div class="error-message" id="signupError"></div>
+  </div>
+</div>
+
 
                 </div>
 

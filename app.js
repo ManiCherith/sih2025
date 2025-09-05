@@ -148,21 +148,22 @@ _renderIssueMarkers(map) {
 
     setupEventListeners() {
 
-        // Use event delegation for all clicks on document
         document.addEventListener('click', (e) => {
-            // Handle role selection buttons - check if clicked element or its parent is a role card or button within it
-            const citizenCard = e.target.closest('#citizenRole');
-            const adminCard = e.target.closest('#adminRole');
-            
-           if (citizenCard) {
-  this.selectRole('citizen');
-  return;
-}
-
-if (adminCard) {
-  this.selectRole('admin');
-  return;
-}
+ if (e.target.id === 'citizenLoginBtn') {
+    this.selectRole('citizen');
+    return;
+  }
+  
+  if (e.target.id === 'citizenSignupBtn') {
+    this.showCitizenSignup();
+    return;
+  }
+  
+  const adminCard = e.target.closest('#adminRole');
+  if (adminCard) {
+    this.selectRole('admin');
+    return;
+  }
 
              const citizenLoginForm = document.getElementById('citizenLoginForm');
   if (citizenLoginForm && !citizenLoginForm.hasListener) {
@@ -313,7 +314,6 @@ if (adminCard) {
             statusFilterAdmin.addEventListener('change', (e) => this.filterAdminIssues());
         }
 
-        // Admin actions
         const exportData = document.getElementById('exportData');
         if (exportData) {
             exportData.addEventListener('click', () => this.exportData());
@@ -323,6 +323,46 @@ if (adminCard) {
         if (toggleHeatmap) {
             toggleHeatmap.addEventListener('click', () => this.toggleHeatmap());
         }
+const citizenSignupForm = document.getElementById('citizenSignupForm');
+if (citizenSignupForm && !citizenSignupForm.hasListener) {
+  const form = citizenSignupForm.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating Account...';
+      }
+      
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
+      
+      try {
+        await this.handleSignup(email, password, confirmPassword);
+      } catch (err) {
+        console.error('Signup error:', err);
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Sign Up';
+        }
+      }
+    });
+    citizenSignupForm.hasListener = true;
+  }
+}
+const showLoginLink = document.getElementById('showCitizenLogin');
+if (showLoginLink) {
+  showLoginLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('citizenSignupWrapper')?.classList.remove('active');
+    this.selectRole('citizen');
+  });
+}
+
     }
 selectRole(role) {
   this.currentRole = role;
@@ -335,13 +375,10 @@ selectRole(role) {
   const citizenWrap = citizenForm ? citizenForm.parentElement : null;
   const adminWrap   = adminForm ? adminForm.parentElement   : null;
 
-  // hide both forms + wrappers first
   citizenForm?.classList.add('hidden');
   adminForm?.classList.add('hidden');
   citizenWrap?.classList.remove('active');
   adminWrap?.classList.remove('active');
-
-  // show the chosen one
   if (role === 'citizen') {
     citizenForm?.classList.remove('hidden');
     citizenWrap?.classList.add('active');
@@ -354,25 +391,27 @@ selectRole(role) {
 }
 
 
-   showLandingPage() {
+showLandingPage() {
   this.currentRole = null;
-
   document.getElementById('landingPage')?.classList.remove('hidden');
-
+  
   const citizenForm = document.getElementById('citizenLoginForm');
-  const adminForm   = document.getElementById('adminLoginForm');
-
+  const adminForm = document.getElementById('adminLoginForm');
+  const signupWrapper = document.getElementById('citizenSignupWrapper');
+  
   citizenForm?.classList.add('hidden');
   adminForm?.classList.add('hidden');
+  signupWrapper?.classList.remove('active');
+  
   citizenForm?.parentElement?.classList.remove('active');
   adminForm?.parentElement?.classList.remove('active');
-
+  
   document.getElementById('citizenInterface')?.classList.add('hidden');
   document.getElementById('adminInterface')?.classList.add('hidden');
-
   document.getElementById('backToHome')?.classList.add('hidden');
   document.body.classList.remove('modal-open');
 }
+
 
  async login(email, password, role) {
   try {
@@ -421,8 +460,70 @@ document.body.classList.remove('modal-open');
   }
 }
 
+showCitizenSignup() {
+  this.currentRole = 'citizen';
+  const landingPage = document.getElementById('landingPage');
+  if (landingPage) landingPage.classList.add('hidden');
+  
+  document.getElementById('citizenLoginForm')?.classList.add('hidden');
+  document.getElementById('adminLoginForm')?.classList.add('hidden');
+  document.getElementById('citizenLoginForm')?.parentElement?.classList.remove('active');
+  document.getElementById('adminLoginForm')?.parentElement?.classList.remove('active');
+  
+  const signupWrapper = document.getElementById('citizenSignupWrapper');
+  if (signupWrapper) {
+    signupWrapper.classList.add('active');
+    document.body.classList.add('modal-open');
+  }
+}
 
+showCitizenLogin() {
+  this.selectRole('citizen');
+}
 
+async handleSignup(email, password, confirmPassword) {
+  const errorElement = document.getElementById('signupError');
+  
+  errorElement.textContent = '';
+  
+  if (password !== confirmPassword) {
+    errorElement.textContent = 'Passwords do not match';
+    return;
+  }
+  
+  if (password.length < 12) {
+    errorElement.textContent = 'Password must be at least 12 characters long';
+    return;
+  }
+  
+  try {
+    const res = await fetch('http://localhost:3443/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const msg = errorData.error || 'Signup failed. Please try again.';
+      throw new Error(msg);
+    }
+    
+    this.showNotification('Account created successfully! Please login.', 'success');
+    
+    document.getElementById('citizenSignupWrapper')?.classList.remove('active');
+    this.selectRole('citizen');
+    
+    const loginEmail = document.getElementById('citizenEmail');
+    if (loginEmail) {
+      loginEmail.value = email;
+    }
+    
+  } catch (error) {
+    errorElement.textContent = error.message;
+  }
+}
 
     switchTab(tabName) {
     console.log('Switching to tab:', tabName);
@@ -1177,5 +1278,5 @@ document.body.classList.remove('modal-open');
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing CivicConnect app');
-    new CivicConnectApp();
+    window.civicApp = new CivicConnectApp();
 });
