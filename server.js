@@ -2,24 +2,24 @@ const logger = require('./logger');
 
 'use strict';
 
-require('dotenv').config(); // load .env before using Prisma or other config
+require('dotenv').config(); 
 
 const express = require('express'); const rateLimit = require('express-rate-limit'); const helmet = require('helmet'); const cors = require('cors');
 const corsOptions = {
-  origin: 'http://localhost:8080', // Replace with your client's origin
-  credentials: true, // Allow credentials
+  origin: 'http://localhost:8080',
+  credentials: true, 
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 
-// If you set generator output = "../generated/prisma", import from that path; else use '@prisma/client'
 
-const { PrismaClient, Prisma } = require('./generated/prisma'); // or: const { PrismaClient } = require('@prisma/client')
+const { PrismaClient, Prisma } = require('./generated/prisma');
 const z = require('zod'); const argon2 = require('argon2'); // validation + hashing
 
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 
-const prisma = new PrismaClient(); // Prisma client instance
+const prisma = new PrismaClient(); 
 
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'replace_with_strong_secret';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'replace_with_strong_secret';
@@ -28,7 +28,7 @@ const REFRESH_TOKEN_EXPIRES_IN = '7d';  // refresh tokens last 7 days
 
 const app = express();
 
-app.use(helmet()); app.use(cors()); app.use(express.json());app.use(cookieParser());app.use(cors(corsOptions)); // security + JSON body parsing
+app.use(helmet()); app.use(express.json());app.use(cookieParser());app.use(cors(corsOptions)); // security + JSON body parsing
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,

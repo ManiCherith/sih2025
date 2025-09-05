@@ -53,22 +53,43 @@
                         <div class="role-card" id="adminRole">
                             <div class="role-icon">🏛️</div>
                             <h3>I'm an Administrator</h3>
-                            <p>Manage issues, route to departments, and monitor performance</p>
+                            <p>Manage issues and route to departments</p>
                             <button class="btn btn--primary btn--full-width">Access Dashboard</button>
                         </div>
                     </div>
      </section>
-                        <form id="citizenLoginForm" class="hidden" style="margin-top: 20px;">
-                              <input type="email" id="citizenEmail" placeholder="Email">
-                            <input type="password" id="citizenPassword" placeholder="Password">
-                          <button type="submit">Citizen Login</button>
-                      </form>
+<div class="login-wrapper">
+  <form id="citizenLoginForm" class="login-card hidden">
+    <h2>LOGIN</h2>
+    <input type="email" id="citizenEmail" placeholder="Email" required>
+    <input type="password" id="citizenPassword" placeholder="Password" required minlength="12">
+    <div class="login-extras">
+      <label>
+        <input type="checkbox" id="rememberMe"> Remember me
+      </label>
+      <a href="#" class="forgot-link">Forgot?</a>
+    </div>
+    <button type="submit" class="login-btn">Citizen Login</button>
+    <div id="loginError" class="error-message"></div>
+  </form>
+</div>
 
-      <form id="adminLoginForm" class="hidden" style="margin-top: 20px;">
-        <input type="email" id="adminEmail" placeholder="Email">
-        <input type="password" id="adminPassword" placeholder="Password">
-        <button type="submit">Admin Login</button>
-      </form>
+<div class="login-wrapper">
+  <form id="adminLoginForm" class="login-card hidden">
+    <h2>ADMIN LOGIN</h2>
+    <input type="email" id="adminEmail" placeholder="Email" required>
+    <input type="password" id="adminPassword" placeholder="Password" required minlength="12">
+    <div class="login-extras">
+      <label>
+        <input type="checkbox" id="rememberMeAdmin"> Remember me
+      </label>
+      <a href="#" class="forgot-link">Forgot?</a>
+    </div>
+    <button type="submit" class="login-btn">Admin Login</button>
+    <div id="loginErrorAdmin" class="error-message"></div>
+  </form>
+</div>
+
                 </div>
 
                 

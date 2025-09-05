@@ -155,43 +155,63 @@ _renderIssueMarkers(map) {
             const adminCard = e.target.closest('#adminRole');
             
            if (citizenCard) {
-   console.log('[LOG] Citizen role clicked');
   this.selectRole('citizen');
   return;
 }
 
 if (adminCard) {
-  console.log('[LOG] Admin role clicked');
   this.selectRole('admin');
   return;
 }
 
-            const citizenLoginForm = document.getElementById('citizenLoginForm');
-  if (citizenLoginForm) {
+             const citizenLoginForm = document.getElementById('citizenLoginForm');
+  if (citizenLoginForm && !citizenLoginForm.hasListener) {
     citizenLoginForm.addEventListener('submit', async (e) => {
-      e.preventDefault(); // Prevent page reload on submit
+      e.preventDefault();
+      const submitButton = citizenLoginForm.querySelector('button[type="submit"]');
+           if (submitButton) {
+      submitButton.disabled = true;               
+      submitButton.textContent = 'Logging in...'; 
+    }
       const email = document.getElementById('citizenEmail').value;
       const password = document.getElementById('citizenPassword').value;
       try {
         await this.login(email, password, 'citizen');
       } catch (err) {
-        this.showNotification(err.message || 'Login failed', 'error');
+      }finally {
+      
+      if (submitButton) {
+        submitButton.disabled = false;             
+        submitButton.textContent = 'Login';        
       }
+    }
     });
+    citizenLoginForm.hasListener = true;
   }
 
   const adminLoginForm = document.getElementById('adminLoginForm');
-  if (adminLoginForm) {
+  if (adminLoginForm && !adminLoginForm.hasListener) {
     adminLoginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const submitButton = adminLoginForm.querySelector('button[type="submit"]');
+         if (submitButton) {
+      submitButton.disabled = true;               
+      submitButton.textContent = 'Logging in...'; 
+    }
       const email = document.getElementById('adminEmail').value;
       const password = document.getElementById('adminPassword').value;
       try {
         await this.login(email, password, 'admin');
       } catch (err) {
-        this.showNotification(err.message || 'Login failed', 'error');
+      }finally {
+      
+      if (submitButton) {
+        submitButton.disabled = false;             
+        submitButton.textContent = 'Login';        
       }
+    }
     });
+    adminLoginForm.hasListener = true;
   }
 
             // Tab navigation
@@ -334,11 +354,14 @@ selectRole(role) {
   const landingPage = document.getElementById('landingPage');
   if (landingPage) landingPage.classList.remove('hidden');
 
-  const citizenLoginForm = document.getElementById('citizenLoginForm');
-  if (citizenLoginForm) citizenLoginForm.classList.add('hidden');
+const citizenLoginForm = document.getElementById('citizenLoginForm');
+if (citizenLoginForm) citizenLoginForm.classList.add('hidden');
 
-  const adminLoginForm = document.getElementById('adminLoginForm');
-  if (adminLoginForm) adminLoginForm.classList.add('hidden');
+
+const adminLoginForm = document.getElementById('adminLoginForm');
+if (adminLoginForm) adminLoginForm.classList.add('hidden');
+
+
 
   const citizenInterface = document.getElementById('citizenInterface');
   if (citizenInterface) citizenInterface.classList.add('hidden');

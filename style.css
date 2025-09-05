@@ -1669,3 +1669,135 @@ select.form-control {
     border-width: 2px;
   }
 }
+/* ---------------------------------------------
+   Login Form Styling
+--------------------------------------------- */
+
+/* Container that centers the form vertically and horizontally */
+.login-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-background);
+  z-index: 200;
+}
+
+/* Login form card styling */
+.login-card {
+  background-color: var(--color-surface);
+  padding: var(--space-24) var(--space-16);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  border: 1px solid var(--color-card-border);
+}
+
+/* Form heading */
+.login-card h2 {
+  margin: 0 0 var(--space-16) 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+/* Inputs */
+.login-card input[type="email"],
+.login-card input[type="password"] {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.login-card input[type="email"]:focus,
+.login-card input[type="password"]:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+  background-color: var(--color-background);
+}
+
+/* Extras container (checkbox and links) */
+.login-extras {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Forgot password link */
+.forgot-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.forgot-link:hover,
+.forgot-link:focus {
+  color: var(--color-primary-hover);
+  outline: none;
+  text-decoration: underline;
+}
+
+/* Submit button */
+.login-btn {
+  background-color: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  padding: var(--space-10) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+  width: 100%;
+  user-select: none;
+}
+
+.login-btn:hover:not(:disabled),
+.login-btn:focus:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.login-btn:active:not(:disabled) {
+  background-color: var(--color-primary-active);
+}
+
+.login-btn:disabled {
+  background-color: var(--color-primary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error message styling */
+.error-message {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  min-height: 1.4em;
+  text-align: center;
+  margin-top: var(--space-4);
+}
+
+/* Accessibility: visually hide labels but keep for screen readers */
+.screen-reader-only {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
