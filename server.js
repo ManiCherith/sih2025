@@ -1,12 +1,14 @@
 const logger = require('./logger');
-const https = require('https');
-const fs = require('fs');
 
 'use strict';
 
 require('dotenv').config(); // load .env before using Prisma or other config
 
 const express = require('express'); const rateLimit = require('express-rate-limit'); const helmet = require('helmet'); const cors = require('cors');
+const corsOptions = {
+  origin: 'http://localhost:8080', // Replace with your client's origin
+  credentials: true, // Allow credentials
+};
 
 
 // If you set generator output = "../generated/prisma", import from that path; else use '@prisma/client'
@@ -26,7 +28,7 @@ const REFRESH_TOKEN_EXPIRES_IN = '7d';  // refresh tokens last 7 days
 
 const app = express();
 
-app.use(helmet()); app.use(cors()); app.use(express.json());app.use(cookieParser()); // security + JSON body parsing
+app.use(helmet()); app.use(cors()); app.use(express.json());app.use(cookieParser());app.use(cors(corsOptions)); // security + JSON body parsing
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -186,9 +188,7 @@ app.get('/profile', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Welcome to the API. Use the /auth routes to signup and login.');
-});
+
 
 
 
@@ -196,13 +196,6 @@ app.get('/', (req, res) => {
 
 // Start server
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3443;
 
-const httpsOptions = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem'),
-};
-
-https.createServer(httpsOptions, app).listen(3443, () => {
-  console.log('HTTPS server running on https://localhost:3443');
-});
+app.listen(PORT, () => console.log('API listening on http://localhost:'+PORT)); // start Express

@@ -353,7 +353,8 @@ selectRole(role) {
 
  async login(email, password, role) {
   try {
-    const res = await fetch('https://localhost:3443/auth/login', {
+    const res = await fetch('http://localhost:3443/auth/login', {
+        
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',  
