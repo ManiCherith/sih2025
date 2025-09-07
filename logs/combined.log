@@ -1,0 +1,90 @@
+2025-09-05T11:48:27.862Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-05T11:48:51.599Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-05T11:49:08.890Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-05T11:50:11.610Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-06T09:52:19.814Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 1 issues
+2025-09-06T09:54:29.503Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-06T09:54:58.904Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:22:36.564Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:22:45.614Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:23:23.967Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:24:04.406Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 0 issues
+2025-09-07T03:25:03.458Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:25:33.255Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:25:35.354Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:25:42.898Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:27:12.592Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:31:30.367Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:31:40.259Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:32:03.806Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:32:13.955Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:32:23.399Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:32:40.134Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:33:02.067Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:33:07.958Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:45:55.839Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:46:01.772Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:46:14.586Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:46:39.511Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:46:50.878Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:46:59.730Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:47:10.115Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:49:19.306Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:49:29.128Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:49:41.749Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T03:49:46.463Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (citizen) fetched 2 issues
+2025-09-07T04:03:56.664Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T04:04:00.715Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T04:04:24.022Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues

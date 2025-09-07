@@ -1,0 +1,56 @@
+2025-09-05T11:48:27.862Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-05T11:48:51.599Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-05T11:49:08.890Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18
+2025-09-05T11:50:11.610Z error: Login error for email cherith@example.com: PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation in
+/home/mithu/sih2025/server.js:103:36
+
+  100 const password = parsed.data.password;
+  101 
+  102 try {
+→ 103   const user = await prisma.user.findUnique(
+The column `User.updatedAt` does not exist in the current database.
+    at ei.handleRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:7283)
+    at ei.handleAndLogRequestError (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6608)
+    at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
+    at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
+    at async /home/mithu/sih2025/server.js:103:18

@@ -1,6 +1,4 @@
-// CivicConnect Application JavaScript
 console.log('app.js loaded');
-
 class CivicConnectApp {
     constructor() {
         this.currentRole = null;
@@ -11,16 +9,19 @@ class CivicConnectApp {
         this.userReports = [];
         this.currentLanguage = 'en';
         this.theme = 'light';
-        
+        this.accessToken = localStorage.getItem('civicconnect_token') || null;
         this.init();
     }
 
-    init() {
+    async init() {
         this.loadSampleData();
         this.setupEventListeners();
         this.setupNavigationHistory();
-        this.showLandingPage();
         this.setupTheme();
+        const isAuthenticated = await this.checkAuthStatus();
+    if (!isAuthenticated) {
+      this.showLandingPage();
+    }
         this.startRealTimeUpdates();
     }
 _renderIssueMarkers(map) {
@@ -215,6 +216,17 @@ _renderIssueMarkers(map) {
     });
     adminLoginForm.hasListener = true;
   }
+const logoutBtnCitizen = document.getElementById('logoutBtnCitizen');
+const logoutBtnAdmin = document.getElementById('logoutBtnAdmin');
+
+if (logoutBtnCitizen) {
+  logoutBtnCitizen.addEventListener('click', () => this.logout());
+}
+
+if (logoutBtnAdmin) {
+  logoutBtnAdmin.addEventListener('click', () => this.logout());
+}
+
 
             // Tab navigation
             if (e.target.classList.contains('tab-btn')) {
@@ -394,9 +406,6 @@ selectRole(role) {
 
     document.body.classList.add('modal-open');
 }
-
-
-
 showLandingPage() {
   this.currentRole = null;
   document.getElementById('landingPage')?.classList.remove('hidden');
@@ -417,62 +426,63 @@ showLandingPage() {
   document.getElementById('backToHome')?.classList.add('hidden');
   document.body.classList.remove('modal-open');
 }
-
-
- async login(email, password, role) {
+async login(email, password, role) {
   try {
     const res = await fetch('http://localhost:3443/auth/login', {
-        
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',  
+      credentials: 'include',
       body: JSON.stringify({ email, password, role }),
     });
 
     if (!res.ok) {
-      
       const errorData = await res.json().catch(() => ({}));
-      const msg = errorData.message || 'Login failed. Please try again.';
+      const msg = errorData.message || errorData.error || 'Login failed. Please try again.';
       throw new Error(msg);
     }
 
     const data = await res.json();
-    this.accessToken = data.accessToken;  
-    this.currentRole = role;
-
-    const defaultTab = role === 'citizen' ? 'report' : 'overview';
-window.history.pushState({
-    page: 'dashboard', 
-    role: role, 
-    tab: defaultTab
-}, 'Dashboard', window.location.href);
-
-this.currentTab = defaultTab;
-
+    this.accessToken = data.accessToken;
     
+    localStorage.setItem('civicconnect_token', this.accessToken);
+    
+    this.currentRole = role;
+    const defaultTab = role === 'citizen' ? 'report' : 'overview';
+    
+    window.history.pushState({ 
+      page: 'dashboard', 
+      role: role, 
+      tab: defaultTab 
+    }, 'Dashboard', window.location.href);
+    
+    this.currentTab = defaultTab;
+
     document.getElementById('citizenLoginForm').classList.add('hidden');
     document.getElementById('adminLoginForm').classList.add('hidden');
-document.getElementById('landingPage')?.classList.add('hidden');
-    
+    document.getElementById('landingPage')?.classList.add('hidden');
+
     if (role === 'citizen') {
       document.getElementById('citizenInterface').classList.remove('hidden');
     } else if (role === 'admin') {
       document.getElementById('adminInterface').classList.remove('hidden');
     }
-document.getElementById('citizenLoginForm')?.parentElement?.classList.remove('active');
-document.getElementById('adminLoginForm')?.parentElement?.classList.remove('active');
 
-document.body.classList.remove('modal-open');
-    
+    document.getElementById('citizenLoginForm')?.parentElement?.classList.remove('active');
+    document.getElementById('adminLoginForm')?.parentElement?.classList.remove('active');
+    document.body.classList.remove('modal-open');
+
     const backToHome = document.getElementById('backToHome');
     if (backToHome) backToHome.classList.remove('hidden');
+
+    await this.loadIssuesFromAPI();
 
     this.showNotification('Logged in successfully!', 'success');
   } catch (error) {
     this.showNotification(error.message, 'error');
-    throw error;  
+    throw error;
   }
 }
+
 
 showCitizenSignup() {
   this.currentRole = 'citizen';
@@ -592,14 +602,147 @@ switchTabWithoutHistory(tabName) {
         this._adminMap.invalidateSize();
     }
 }
+async checkAuthStatus() {
+  if (!this.accessToken) return false;
+  try {
+    const response = await this.makeAuthenticatedRequest('http://localhost:3443/profile');
+    if (response.ok) {
+      const user = await response.json();
+      this.currentRole = user.role;
+      
+      document.getElementById('landingPage')?.classList.add('hidden');
+      
+      const savedTab = localStorage.getItem('civicconnect_last_tab');
+      const savedRole = localStorage.getItem('civicconnect_last_role');
+      let initialTab = user.role === 'citizen' ? 'report' : 'overview';
+      if (savedTab && savedRole === user.role) {
+        initialTab = savedTab;
+      }
+      this.currentTab = initialTab;
+      
+      if (user.role === 'citizen') {
+        document.getElementById('citizenInterface').classList.remove('hidden');
+        document.getElementById('adminInterface').classList.add('hidden');
+        this.loadCitizenTab(this.currentTab);
+      } else if (user.role === 'admin') {
+        document.getElementById('adminInterface').classList.remove('hidden');
+        document.getElementById('citizenInterface').classList.add('hidden');
+        this.loadAdminTab(this.currentTab);
+      }
+      
+      document.getElementById('backToHome')?.classList.remove('hidden');
+      document.body.classList.remove('modal-open');
+      await this.loadIssuesFromAPI();
+      return true;
+    }
+  } catch (error) {
+    localStorage.removeItem('civicconnect_token');
+    this.accessToken = null;
+  }
+  return false;
+}
+
+
+logout() {
+  localStorage.removeItem('civicconnect_token');
+  localStorage.removeItem('civicconnect_last_tab');
+  localStorage.removeItem('civicconnect_last_role');
+  this.accessToken = null;
+  this.currentRole = null;
+  this.currentTab = null;
+  this.showLandingPage();
+  window.history.replaceState({page: 'landing'}, 'CivicConnect', '/');
+}
+
+
+async refreshAccessToken() {
+  try {
+    const response = await fetch('http://localhost:3443/auth/refresh', {
+      method: 'POST',
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      this.accessToken = data.accessToken;
+      localStorage.setItem('civicconnect_token', this.accessToken);
+      return true;
+    }
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+  }
+  
+  localStorage.removeItem('civicconnect_token');
+  this.accessToken = null;
+  return false;
+}
+
+async makeAuthenticatedRequest(url, options = {}) {
+  options.headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+    'Authorization': `Bearer ${this.accessToken}`
+  };
+  options.credentials = 'include';
+
+  let response = await fetch(url, options);
+  
+  if (response.status === 401) {
+    const refreshed = await this.refreshAccessToken();
+    if (refreshed) {
+      options.headers['Authorization'] = `Bearer ${this.accessToken}`;
+      response = await fetch(url, options);
+    } else {
+      this.showLandingPage();
+      this.showNotification('Session expired. Please login again.', 'error');
+    }
+  }
+  
+  return response;
+}
+
+async loadIssuesFromAPI() {
+  try {
+    const response = await this.makeAuthenticatedRequest('http://localhost:3443/api/issues');
+
+    if (response.ok) {
+      const issues = await response.json();
+      
+      this.issues = issues.map(issue => ({
+        id: issue.id,
+        title: issue.title,
+        category: issue.category,
+        description: issue.description,
+        location: issue.location,
+        priority: issue.priority,
+        status: issue.status,
+        submittedBy: issue.submittedBy,
+        submittedDate: issue.createdAt,
+        assignedTo: issue.assignedTo,
+        assignedDate: issue.updatedAt,
+        upvotes: issue.upvotes || 0,
+        comments: issue.comments || 0,
+        coordinates: issue.coordinates || [40.7128 + (Math.random() - 0.5) * 0.1, -74.0060 + (Math.random() - 0.5) * 0.1]
+      }));
+      
+      if (this.currentRole === 'citizen') {
+        this.userReports = [...this.issues]; 
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load issues:', error);
+    this.showNotification('Failed to load issues', 'error');
+  }
+}
 
 
 
 switchTab(tabName) {
     console.log('Switching to tab:', tabName);
     this.currentTab = tabName;
+    localStorage.setItem('civicconnect_last_tab', tabName);
+  localStorage.setItem('civicconnect_last_role', this.currentRole);
 
-    // Add tab navigation to browser history
     const currentState = window.history.state || {};
     window.history.pushState({
         ...currentState,
@@ -691,56 +834,77 @@ switchTab(tabName) {
                 break;
         }
     }
+async handleIssueSubmission(e) {
+  e.preventDefault();
+  
+  const titleEl = document.getElementById('issueTitle');
+  const categoryEl = document.getElementById('issueCategory');
+  const descriptionEl = document.getElementById('issueDescription');
+  const locationEl = document.getElementById('issueLocation');
+  const priorityEl = document.getElementById('issuePriority');
 
-    handleIssueSubmission(e) {
-        e.preventDefault();
-        console.log('Handling issue submission');
-        
-        const titleEl = document.getElementById('issueTitle');
-        const categoryEl = document.getElementById('issueCategory');
-        const descriptionEl = document.getElementById('issueDescription');
-        const locationEl = document.getElementById('issueLocation');
-        const priorityEl = document.getElementById('issuePriority');
-        
-        if (!titleEl || !categoryEl || !descriptionEl || !locationEl || !priorityEl) {
-            this.showNotification('Form elements not found', 'error');
-            return;
-        }
-        
-        const newIssue = {
-            id: `CIV-2025-${String(this.issues.length + 1).padStart(3, '0')}`,
-            title: titleEl.value,
-            category: categoryEl.value,
-            description: descriptionEl.value,
-            location: locationEl.value,
-            priority: priorityEl.value,
-            status: 'submitted',
-            submittedBy: 'Current User',
-            submittedDate: new Date().toISOString(),
-            upvotes: 0,
-            comments: 0,
-            coordinates: [40.7128 + (Math.random() - 0.5) * 0.1, -74.0060 + (Math.random() - 0.5) * 0.1]
-        };
+  if (!titleEl || !categoryEl || !descriptionEl || !locationEl || !priorityEl) {
+    this.showNotification('Form elements not found', 'error');
+    return;
+  }
 
-        this.issues.unshift(newIssue);
-        this.userReports.unshift(newIssue);
-        
-        this.showNotification('Issue reported successfully!', 'success');
-        e.target.reset();
-        
-        const photoPreview = document.getElementById('photoPreview');
-        if (photoPreview) {
-            photoPreview.classList.add('hidden');
-        }
-        
-        // Simulate real-time processing
-        setTimeout(() => {
-            newIssue.status = 'assigned';
-            newIssue.assignedTo = this.getDepartmentForCategory(newIssue.category);
-            newIssue.assignedDate = new Date().toISOString();
-            this.showNotification('Issue has been assigned to ' + newIssue.assignedTo, 'info');
-        }, 3000);
+  const issueData = {
+    title: titleEl.value,
+    category: categoryEl.value,
+    description: descriptionEl.value,
+    location: locationEl.value,
+    priority: priorityEl.value,
+    coordinates: [40.7128 + (Math.random() - 0.5) * 0.1, -74.0060 + (Math.random() - 0.5) * 0.1]
+  };
+
+  try {
+    const response = await this.makeAuthenticatedRequest('http://localhost:3443/api/issues', {
+      method: 'POST',
+      body: JSON.stringify(issueData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to submit issue');
     }
+
+    const newIssue = await response.json();
+    
+    const transformedIssue = {
+      id: newIssue.id,
+      title: newIssue.title,
+      category: newIssue.category,
+      description: newIssue.description,
+      location: newIssue.location,
+      priority: newIssue.priority,
+      status: newIssue.status,
+      submittedBy: newIssue.submittedBy,
+      submittedDate: newIssue.createdAt,
+      assignedTo: newIssue.assignedTo,
+      upvotes: newIssue.upvotes || 0,
+      comments: newIssue.comments || 0,
+      coordinates: newIssue.coordinates || issueData.coordinates
+    };
+    
+    this.issues.unshift(transformedIssue);
+    this.userReports.unshift(transformedIssue);
+    
+    this.showNotification('Issue reported successfully!', 'success');
+    e.target.reset();
+    
+    const photoPreview = document.getElementById('photoPreview');
+    if (photoPreview) {
+      photoPreview.classList.add('hidden');
+    }
+    
+  } catch (error) {
+    console.error('Issue submission error:', error);
+    this.showNotification(error.message, 'error');
+  }
+}
+
+ 
+    
 
     handlePhotoUpload(e) {
         const file = e.target.files[0];
