@@ -88,3 +88,11 @@ The column `User.updatedAt` does not exist in the current database.
 2025-09-07T04:03:56.664Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
 2025-09-07T04:04:00.715Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
 2025-09-07T04:04:24.022Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T06:15:49.310Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 0 issues
+2025-09-07T06:27:10.513Z info: User 4a6786e2-f0e2-4c8a-ba84-3bdb12be909f (citizen) fetched 1 issues
+2025-09-07T07:00:21.899Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T07:00:34.838Z info: User 4a6786e2-f0e2-4c8a-ba84-3bdb12be909f (citizen) fetched 1 issues
+2025-09-07T07:13:16.853Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T07:18:12.763Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T07:18:25.021Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues
+2025-09-07T07:20:55.065Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 3 issues

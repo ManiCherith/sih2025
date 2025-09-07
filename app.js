@@ -30,21 +30,51 @@ _renderIssueMarkers(map) {
     } else {
         this._issueMarkersLayer = L.layerGroup().addTo(map);
     }
+    const markersArray = [];
+this.issues.forEach(issue => {
+  let coords = null;
 
-    this.issues.forEach(issue => {
-        if (!issue.coordinates) return;
-        const [lat, lng] = issue.coordinates;
-        const marker = L.marker([lat, lng])
-            .bindPopup(`<strong>${issue.title}</strong><br>${issue.location}<br>Status: ${this.formatStatus(issue.status)}`);
-        this._issueMarkersLayer.addLayer(marker);
-    });
+  if (issue.coordinates && issue.coordinates.length === 2) {
+    coords = issue.coordinates;
+  } else if (issue.approxCoordinates && issue.approxCoordinates.length === 2) {
+    coords = issue.approxCoordinates;
+  }
+
+  if (!coords) {
+    return;
+  }
+
+  const [lat, lng] = coords;
+  const marker = L.marker([lat, lng])
+    .bindPopup(`<b>${issue.title}</b><br>${issue.location}<br>Status: ${this.formatStatus(issue.status)}`);
+  this._adminMap.addLayer(marker);
+});
+if (markersArray.length > 0) {
+  const group = L.featureGroup(markersArray);
+  this._adminMap.fitBounds(group.getBounds().pad(0.2));
+}
+
+
 }
 
     loadSampleData() {
-        // Load sample issues
-        this.issues = [];
+        this.issues = [
+  {
+    id: "test1",
+    title: "Test Issue 1",
+    location: "Location A",
+    status: "open",
+    coordinates: [23.367, 85.317], 
+  },
+  {
+    id: "test2",
+    title: "Test Issue 2",
+    location: "Location B",
+    status: "resolved",
+    coordinates: [23.3247, 85.2425],}
+];
 
-        // Generate additional sample issues for better demonstration
+
         this.generateAdditionalIssues();
 
         // Load departments data
@@ -847,6 +877,7 @@ async handleIssueSubmission(e) {
     this.showNotification('Form elements not found', 'error');
     return;
   }
+  const coordinates = this.currentCoordinates || null;
 
   const issueData = {
     title: titleEl.value,
@@ -854,54 +885,29 @@ async handleIssueSubmission(e) {
     description: descriptionEl.value,
     location: locationEl.value,
     priority: priorityEl.value,
-    coordinates: [40.7128 + (Math.random() - 0.5) * 0.1, -74.0060 + (Math.random() - 0.5) * 0.1]
+    coordinates: coordinates,
   };
 
   try {
-    const response = await this.makeAuthenticatedRequest('http://localhost:3443/api/issues', {
+    const response = await this.makeAuthenticatedRequest('http://192.168.1.100:3443/api/issues', {
       method: 'POST',
-      body: JSON.stringify(issueData)
+      body: JSON.stringify(issueData),
     });
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || 'Failed to submit issue');
     }
-
     const newIssue = await response.json();
-    
-    const transformedIssue = {
-      id: newIssue.id,
-      title: newIssue.title,
-      category: newIssue.category,
-      description: newIssue.description,
-      location: newIssue.location,
-      priority: newIssue.priority,
-      status: newIssue.status,
-      submittedBy: newIssue.submittedBy,
-      submittedDate: newIssue.createdAt,
-      assignedTo: newIssue.assignedTo,
-      upvotes: newIssue.upvotes || 0,
-      comments: newIssue.comments || 0,
-      coordinates: newIssue.coordinates || issueData.coordinates
-    };
-    
-    this.issues.unshift(transformedIssue);
-    this.userReports.unshift(transformedIssue);
-    
+    this.issues.unshift(newIssue);
+    this.userReports.unshift(newIssue);
     this.showNotification('Issue reported successfully!', 'success');
     e.target.reset();
-    
-    const photoPreview = document.getElementById('photoPreview');
-    if (photoPreview) {
-      photoPreview.classList.add('hidden');
-    }
-    
+    this.currentCoordinates = null; 
   } catch (error) {
-    console.error('Issue submission error:', error);
     this.showNotification(error.message, 'error');
   }
 }
+
 
  
     
@@ -921,21 +927,34 @@ async handleIssueSubmission(e) {
         }
     }
 
-    useGPSLocation() {
-        const locations = [
-            'Current Location (GPS)',
-            '123 Main Street',
-            'Downtown Plaza',
-            'Central Park Area',
-            'City Hall District'
-        ];
-        const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-        const locationInput = document.getElementById('issueLocation');
-        if (locationInput) {
-            locationInput.value = randomLocation;
-        }
-        this.showNotification('Location detected: ' + randomLocation, 'info');
+ useGPSLocation() {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude.toFixed(6);
+      const lng = position.coords.longitude.toFixed(6);
+      const locationInput = document.getElementById('issueLocation');
+      if (locationInput) {
+        locationInput.value = `${lat}, ${lng}`;  // Fill the form’s location input with GPS coordinates
+      }
+      this.showNotification(`Location detected: ${lat}, ${lng}`, 'info');  // Show a message
+    },
+    (error) => {
+      alert('Unable to retrieve your location. Please allow location access or type your location manually.');
+      console.error('Geolocation error:', error);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     }
+  );
+}
+
 
     loadUserReports(statusFilter = '') {
         const container = document.getElementById('myReportsList');

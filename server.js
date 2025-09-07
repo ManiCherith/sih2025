@@ -248,31 +248,22 @@ app.post('/api/issues', authMiddleware, async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid issue data' });
     }
-
-    const user = await prisma.user.findUnique({ 
-      where: { id: req.user.id },
-      select: { email: true }
-    });
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
 
     const issue = await prisma.issue.create({
       data: {
         ...parsed.data,
         userId: req.user.id,
-        submittedBy: user?.email || 'Unknown User'
+        submittedBy: user?.email || 'Unknown User',
+        coordinates: parsed.data.coordinates || null,
       },
-      include: {
-        user: {
-          select: { email: true }
-        }
-      }
     });
-
     return res.status(201).json(issue);
   } catch (e) {
-    logger.error(`Create issue error: ${e.stack || e}`);
     return res.status(500).json({ error: 'Failed to create issue' });
   }
 });
+
 
 app.patch('/api/issues/:id', authMiddleware, async (req, res) => {
   try {
