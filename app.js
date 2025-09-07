@@ -632,6 +632,34 @@ switchTabWithoutHistory(tabName) {
         this._adminMap.invalidateSize();
     }
 }
+calculateAnalytics() {
+  if (!this.issues || this.issues.length === 0) {
+    this.analytics = {
+      totalIssues: 0,
+      resolvedIssues: 0,
+      avgResolutionTime: "",
+    };
+    return;
+  }
+
+  this.analytics.totalIssues = this.issues.length;
+  this.analytics.resolvedIssues = this.issues.filter(issue => issue.status === 'resolved').length;
+
+  const resolvedIssues = this.issues.filter(issue => issue.status === 'resolved' && issue.submittedDate && issue.assignedDate);
+  if (resolvedIssues.length > 0) {
+    const totalTime = resolvedIssues.reduce((acc, issue) => {
+      const submitted = new Date(issue.submittedDate);
+      const assigned = new Date(issue.assignedDate);
+      return acc + (assigned - submitted);
+    }, 0);
+    const avgTimeMs = totalTime / resolvedIssues.length;
+    this.analytics.avgResolutionTime = (avgTimeMs / (1000 * 60 * 60 * 24)).toFixed(1) + ' days'; // in days
+  } else {
+    this.analytics.avgResolutionTime = "N/A";
+  }
+
+}
+
 async checkAuthStatus() {
   if (!this.accessToken) return false;
   try {
@@ -758,10 +786,41 @@ async loadIssuesFromAPI() {
       if (this.currentRole === 'citizen') {
         this.userReports = [...this.issues]; 
       }
+      this.calculateAnalytics();
     }
   } catch (error) {
     console.error('Failed to load issues:', error);
     this.showNotification('Failed to load issues', 'error');
+  }
+}
+updateAnalyticsUI() {
+  const totalIssuesEl = document.getElementById('totalIssuesCount');
+  if (totalIssuesEl) totalIssuesEl.textContent = this.analytics.totalIssues;
+
+  const resolvedIssuesEl = document.getElementById('resolvedIssuesCount');
+  if (resolvedIssuesEl) resolvedIssuesEl.textContent = this.analytics.resolvedIssues;
+
+  const avgTimeEl = document.getElementById('avgResolutionTime');
+  if (avgTimeEl) avgTimeEl.textContent = this.analytics.avgResolutionTime;
+
+}
+initializeCharts() {
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  this.categoryChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Issues by Category', data: [], backgroundColor: [] }] },
+    options: { /* chart options */ }
+  });
+}
+
+updateCharts() {
+  const labels = Object.keys(this.analytics.categoryBreakdown);
+  const data = Object.values(this.analytics.categoryBreakdown);
+
+  if (this.categoryChart) {
+    this.categoryChart.data.labels = labels;
+    this.categoryChart.data.datasets[0].data = data;
+    this.categoryChart.update();
   }
 }
 
@@ -877,19 +936,30 @@ async handleIssueSubmission(e) {
     this.showNotification('Form elements not found', 'error');
     return;
   }
-  const coordinates = this.currentCoordinates || null;
 
-  const issueData = {
-    title: titleEl.value,
-    category: categoryEl.value,
-    description: descriptionEl.value,
-    location: locationEl.value,
-    priority: priorityEl.value,
-    coordinates: coordinates,
-  };
+let coordinates = null;
+let locValue = locationEl.value.trim();  // Change here from const to let
+if (locValue.startsWith('"') && locValue.endsWith('"')) {
+  locValue = locValue.slice(1, -1);
+}
+if (locValue.includes(',')) {
+  const parts = locValue.split(',').map(s => parseFloat(s.trim()));
+  if (parts.length === 2 && parts.every(n => !isNaN(n))) {
+    coordinates = parts;
+  }
+}
+
+const issueData = {
+  title: titleEl.value,
+  category: categoryEl.value,
+  description: descriptionEl.value,
+  location: locValue,           // Use cleaned location here
+  priority: priorityEl.value,
+  coordinates: coordinates,
+};
 
   try {
-    const response = await this.makeAuthenticatedRequest('http://192.168.1.100:3443/api/issues', {
+    const response = await this.makeAuthenticatedRequest('http://localhost:3443/api/issues', {
       method: 'POST',
       body: JSON.stringify(issueData),
     });
@@ -903,7 +973,10 @@ async handleIssueSubmission(e) {
     this.showNotification('Issue reported successfully!', 'success');
     e.target.reset();
     this.currentCoordinates = null; 
-  } catch (error) {
+    await this.loadIssuesFromAPI();
+if (this.currentRole === 'admin' && this.currentTab === 'admin-map') {
+  this.loadAdminMap();
+  } }catch (error) {
     this.showNotification(error.message, 'error');
   }
 }
@@ -1257,11 +1330,14 @@ async handleIssueSubmission(e) {
         `).join('');
     }
 
-    loadAnalytics() {
-        setTimeout(() => {
-            this.loadDetailedCharts();
-        }, 100);
-    }
+  loadAnalytics() {
+  if (!this.categoryChart) {
+    this.initializeCharts();  // Initialize charts once
+  }
+  this.updateCharts();        // Update charts with current data
+  this.updateAnalyticsUI();   // Update textual analytics UI
+}
+
 
     loadDetailedCharts() {
         // Detailed trends chart
@@ -1431,12 +1507,12 @@ async handleIssueSubmission(e) {
     }
 
     toggleLanguage() {
-        this.currentLanguage = this.currentLanguage === 'en' ? 'es' : 'en';
+        this.currentLanguage = this.currentLanguage === 'en' ? 'hin' : 'en';
         const langBtn = document.getElementById('languageToggle');
         if (langBtn) {
             langBtn.textContent = `🌐 ${this.currentLanguage.toUpperCase()}`;
         }
-        this.showNotification(`Language switched to ${this.currentLanguage === 'en' ? 'English' : 'Spanish'}`, 'info');
+        this.showNotification(`Language switched to ${this.currentLanguage === 'en' ? 'English' : 'Hindi'}`, 'info');
     }
 
     setupTheme() {

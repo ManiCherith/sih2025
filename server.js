@@ -268,6 +268,9 @@ app.post('/api/issues', authMiddleware, async (req, res) => {
 app.patch('/api/issues/:id', authMiddleware, async (req, res) => {
   try {
     const parsed = UpdateIssueSchema.safeParse(req.body);
+    console.log('UpdateIssue PATCH request body:', req.body);
+   console.log('Parsed update data:', parsed.data);
+
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid update data' });
     }
