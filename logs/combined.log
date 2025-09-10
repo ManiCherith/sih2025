@@ -119,3 +119,48 @@ The column `User.updatedAt` does not exist in the current database.
 2025-09-07T12:36:44.667Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 5 issues
 2025-09-07T12:40:49.452Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 5 issues
 2025-09-07T12:44:10.339Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 5 issues
+2025-09-07T14:18:59.085Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 5 issues
+2025-09-07T14:22:07.126Z info: User cmf9o66ni0002cx4puunhr5oq (citizen) fetched 1 issues
+2025-09-07T15:35:54.042Z info: User cmf9o66ni0002cx4puunhr5oq (citizen) fetched 1 issues
+2025-09-07T15:36:05.131Z info: User cmf9o66ni0002cx4puunhr5oq (citizen) fetched 1 issues
+2025-09-07T15:36:15.177Z info: User cmf9o66ni0002cx4puunhr5oq (citizen) fetched 1 issues
+2025-09-07T15:36:46.116Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 1 issues
+2025-09-07T15:37:01.836Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 5 issues
+2025-09-08T00:58:53.977Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 1 issues
+2025-09-08T06:43:00.790Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 2 issues
+2025-09-08T06:43:18.319Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 6 issues
+2025-09-08T10:22:34.104Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 2 issues
+2025-09-08T10:23:17.851Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 3 issues
+2025-09-08T10:23:48.709Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 7 issues
+2025-09-08T10:25:07.536Z info: User cmf6w4gmu0002cxizw7p6bcke (citizen) fetched 3 issues
+2025-09-08T10:28:05.649Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 7 issues
+2025-09-08T10:28:39.356Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 7 issues
+2025-09-08T10:30:48.674Z info: User 4a6786e2-f0e2-4c8a-ba84-3bdb12be909f (citizen) fetched 1 issues
+2025-09-09T15:30:59.328Z info: User 58bfe82f-7ebf-4ebf-aa3b-a5c33a7c58cf (admin) fetched 7 issues
+2025-09-09T15:31:17.261Z info: User 4a6786e2-f0e2-4c8a-ba84-3bdb12be909f (citizen) fetched 1 issues
+2025-09-10T16:01:42.310Z info: User cmf9o66ni0002cx4puunhr5oq (citizen) fetched 1 issues
+2025-09-10T16:02:29.318Z info: User cmf9o66ni0002cx4puunhr5oq (citizen) fetched 1 issues
+2025-09-10T16:03:46.263Z info: User 4a6786e2-f0e2-4c8a-ba84-3bdb12be909f (citizen) fetched 1 issues
+2025-09-10T16:12:36.469Z info: User 4a6786e2-f0e2-4c8a-ba84-3bdb12be909f (citizen) fetched 1 issues
+2025-09-10T16:21:14.599Z info: User cmfe6sb090000jb99r0xu6v55 (citizen) fetched 0 issues
+2025-09-10T16:21:33.943Z info: User cmfe6sb090000jb99r0xu6v55 (citizen) fetched 1 issues
+2025-09-10T16:28:14.534Z error: Login error for email admin@example.com: TypeError: params must be in the format name=value
+    at /home/mithu/sih2025/node_modules/@phc/format/index.js:19:13
+    at Array.forEach (<anonymous>)
+    at keyValtoObj (/home/mithu/sih2025/node_modules/@phc/format/index.js:16:18)
+    at deserialize (/home/mithu/sih2025/node_modules/@phc/format/index.js:193:14)
+    at Object.verify (/home/mithu/sih2025/node_modules/argon2/argon2.cjs:166:27)
+    at /home/mithu/sih2025/server.js:131:32
+2025-09-10T16:28:22.589Z error: Login error for email admin@example.com: TypeError: params must be in the format name=value
+    at /home/mithu/sih2025/node_modules/@phc/format/index.js:19:13
+    at Array.forEach (<anonymous>)
+    at keyValtoObj (/home/mithu/sih2025/node_modules/@phc/format/index.js:16:18)
+    at deserialize (/home/mithu/sih2025/node_modules/@phc/format/index.js:193:14)
+    at Object.verify (/home/mithu/sih2025/node_modules/argon2/argon2.cjs:166:27)
+    at /home/mithu/sih2025/server.js:131:32
+2025-09-10T16:32:28.507Z info: User fac9801b-f967-4e66-853f-808bb6b33a0e (admin) fetched 1 issues
+2025-09-10T16:44:58.842Z info: User fac9801b-f967-4e66-853f-808bb6b33a0e (admin) fetched 1 issues
+2025-09-10T16:45:19.542Z info: User cmfe6sb090000jb99r0xu6v55 (citizen) fetched 1 issues
+2025-09-10T16:45:54.681Z info: User cmfe6sb090000jb99r0xu6v55 (citizen) fetched 2 issues
+2025-09-10T16:46:03.320Z info: User fac9801b-f967-4e66-853f-808bb6b33a0e (admin) fetched 2 issues
+2025-09-10T16:46:10.066Z info: User fac9801b-f967-4e66-853f-808bb6b33a0e (admin) fetched 2 issues

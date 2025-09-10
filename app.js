@@ -1,4 +1,5 @@
 console.log('app.js loaded');
+const backendUrl = "http://localhost:3443";
 class CivicConnectApp {
     constructor() {
         this.currentRole = null;
@@ -793,6 +794,10 @@ async loadIssuesFromAPI() {
     this.showNotification('Failed to load issues', 'error');
   }
 }
+getPhotoUrl(photoPath) {
+  if (!photoPath) return null;
+  return 'http://localhost:3443/' + photoPath.replace(/^\/+/, '');
+}
 updateAnalyticsUI() {
   const totalIssuesEl = document.getElementById('totalIssuesCount');
   if (totalIssuesEl) totalIssuesEl.textContent = this.analytics.totalIssues;
@@ -925,61 +930,74 @@ switchTab(tabName) {
     }
 async handleIssueSubmission(e) {
   e.preventDefault();
-  
+
   const titleEl = document.getElementById('issueTitle');
   const categoryEl = document.getElementById('issueCategory');
   const descriptionEl = document.getElementById('issueDescription');
   const locationEl = document.getElementById('issueLocation');
   const priorityEl = document.getElementById('issuePriority');
+  const photoInput = document.getElementById('issuePhoto');
 
   if (!titleEl || !categoryEl || !descriptionEl || !locationEl || !priorityEl) {
     this.showNotification('Form elements not found', 'error');
     return;
   }
 
-let coordinates = null;
-let locValue = locationEl.value.trim();  // Change here from const to let
-if (locValue.startsWith('"') && locValue.endsWith('"')) {
-  locValue = locValue.slice(1, -1);
-}
-if (locValue.includes(',')) {
-  const parts = locValue.split(',').map(s => parseFloat(s.trim()));
-  if (parts.length === 2 && parts.every(n => !isNaN(n))) {
-    coordinates = parts;
+  let coordinates = null;
+  let locValue = locationEl.value.trim();
+  if (locValue.startsWith('"') && locValue.endsWith('"')) {
+    locValue = locValue.slice(1, -1);
   }
-}
+  if (locValue.includes(',')) {
+    const parts = locValue.split(',').map(s => parseFloat(s.trim()));
+    if (parts.length === 2 && parts.every(n => !isNaN(n))) {
+      coordinates = parts;
+    }
+  }
 
-const issueData = {
-  title: titleEl.value,
-  category: categoryEl.value,
-  description: descriptionEl.value,
-  location: locValue,           // Use cleaned location here
-  priority: priorityEl.value,
-  coordinates: coordinates,
-};
-
+  const formData = new FormData();
+  formData.append('title', titleEl.value);
+  formData.append('category', categoryEl.value);
+  formData.append('description', descriptionEl.value);
+  formData.append('location', locValue);
+  formData.append('priority', priorityEl.value);
+  if (coordinates) {
+    formData.append('coordinates', JSON.stringify(coordinates));
+  }
+  if (photoInput && photoInput.files.length > 0) {
+    formData.append('photo', photoInput.files);
+  }
+  
   try {
-    const response = await this.makeAuthenticatedRequest('http://localhost:3443/api/issues', {
+    const response = await fetch('http://localhost:3443/api/issues', {
       method: 'POST',
-      body: JSON.stringify(issueData),
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`
+      },
+      body: formData,
+      credentials: 'include'
     });
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || 'Failed to submit issue');
     }
+
     const newIssue = await response.json();
     this.issues.unshift(newIssue);
     this.userReports.unshift(newIssue);
     this.showNotification('Issue reported successfully!', 'success');
     e.target.reset();
-    this.currentCoordinates = null; 
+    this.currentCoordinates = null;
     await this.loadIssuesFromAPI();
-if (this.currentRole === 'admin' && this.currentTab === 'admin-map') {
-  this.loadAdminMap();
-  } }catch (error) {
+    if (this.currentRole === 'admin' && this.currentTab === 'admin-map') {
+      this.loadAdminMap();
+    }
+  } catch (error) {
     this.showNotification(error.message, 'error');
   }
 }
+
 
 
  
@@ -1232,36 +1250,44 @@ if (this.currentRole === 'admin' && this.currentTab === 'admin-map') {
         this.renderIssuesTable();
     }
 
-    renderIssuesTable() {
-        const container = document.getElementById('issuesTable');
-        if (!container) return;
-        
-        const filteredIssues = this.getFilteredAdminIssues();
-        
-        container.innerHTML = `
-            <div class="table-header">
-                <div>Issue Details</div>
-                <div>Category</div>
-                <div>Priority</div>
-                <div>Status</div>
-                <div>Date</div>
-                <div>Assigned To</div>
-            </div>
-            ${filteredIssues.map(issue => `
-                <div class="table-row" data-issue-id="${issue.id}">
-                    <div class="issue-summary">
-                        <div class="issue-title-small">${issue.title}</div>
-                        <div class="issue-description-small">${issue.description}</div>
-                    </div>
-                    <div><span class="category-badge ${issue.category}">${issue.category}</span></div>
-                    <div><span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
-                    <div><span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
-                    <div>${this.formatDate(issue.submittedDate)}</div>
-                    <div>${issue.assignedTo || 'Unassigned'}</div>
+   renderIssuesTable() {
+    const container = document.getElementById('issuesTable');
+    if (!container) return;
+    
+    const filteredIssues = this.getFilteredAdminIssues();
+
+    container.innerHTML = `
+        <div class="table-header">
+            <div>Issue Details</div>
+            <div>Category</div>
+            <div>Priority</div>
+            <div>Status</div>
+            <div>Date</div>
+            <div>Assigned To</div>
+            <div>Photo</div> <!-- Add column header -->
+        </div>
+        ${filteredIssues.map(issue => {
+            const photoUrl = this.getPhotoUrl(issue.photoPath);
+            return `
+            <div class="table-row" data-issue-id="${issue.id}">
+                <div class="issue-summary">
+                    <div class="issue-title-small">${issue.title}</div>
+                    <div class="issue-description-small">${issue.description}</div>
                 </div>
-            `).join('')}
-        `;
-    }
+                <div><span class="category-badge ${issue.category}">${issue.category}</span></div>
+                <div><span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
+                <div><span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
+                <div>${this.formatDate(issue.submittedDate)}</div>
+                <div>${issue.assignedTo || 'Unassigned'}</div>
+                <div>
+                    ${photoUrl ? `<img src="${photoUrl}" alt="Issue Photo" style="max-width:100px; max-height:80px; border-radius:4px;">` : 'No Photo'}
+                </div>
+            </div>
+            `;
+        }).join('')}
+    `;
+}
+
 
     getFilteredAdminIssues() {
         let filtered = [...this.issues];

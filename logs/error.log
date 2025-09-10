@@ -54,3 +54,17 @@ The column `User.updatedAt` does not exist in the current database.
     at ei.request (/home/mithu/sih2025/generated/prisma/runtime/library.js:124:6315)
     at async a (/home/mithu/sih2025/generated/prisma/runtime/library.js:133:9551)
     at async /home/mithu/sih2025/server.js:103:18
+2025-09-10T16:28:14.534Z error: Login error for email admin@example.com: TypeError: params must be in the format name=value
+    at /home/mithu/sih2025/node_modules/@phc/format/index.js:19:13
+    at Array.forEach (<anonymous>)
+    at keyValtoObj (/home/mithu/sih2025/node_modules/@phc/format/index.js:16:18)
+    at deserialize (/home/mithu/sih2025/node_modules/@phc/format/index.js:193:14)
+    at Object.verify (/home/mithu/sih2025/node_modules/argon2/argon2.cjs:166:27)
+    at /home/mithu/sih2025/server.js:131:32
+2025-09-10T16:28:22.589Z error: Login error for email admin@example.com: TypeError: params must be in the format name=value
+    at /home/mithu/sih2025/node_modules/@phc/format/index.js:19:13
+    at Array.forEach (<anonymous>)
+    at keyValtoObj (/home/mithu/sih2025/node_modules/@phc/format/index.js:16:18)
+    at deserialize (/home/mithu/sih2025/node_modules/@phc/format/index.js:193:14)
+    at Object.verify (/home/mithu/sih2025/node_modules/argon2/argon2.cjs:166:27)
+    at /home/mithu/sih2025/server.js:131:32

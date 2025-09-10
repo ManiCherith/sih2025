@@ -11,10 +11,23 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+const multer = require('multer');
+const path = require('path');
+const upload = multer({
+  dest: 'uploads/',
+  fileFilter: (req, file, cb) => {
+    if (/image\/(jpeg|png|jpg|webp)/.test(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  },
+  limits: { fileSize: 4 * 1024 * 1024 }
+});
 
 
 const { PrismaClient, Prisma } = require('@prisma/client');
-const z = require('zod'); const argon2 = require('argon2'); // validation + hashing
+const z = require('zod'); const argon2 = require('argon2'); 
 
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
@@ -23,12 +36,12 @@ const prisma = new PrismaClient();
 
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'replace_with_strong_secret';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'replace_with_strong_secret';
-const ACCESS_TOKEN_EXPIRES_IN = '15m';   // access tokens last 15 minutes
-const REFRESH_TOKEN_EXPIRES_IN = '7d';  // refresh tokens last 7 days
+const ACCESS_TOKEN_EXPIRES_IN = '15m';   
+const REFRESH_TOKEN_EXPIRES_IN = '7d';  
 
 const app = express();
 
-app.use(helmet()); app.use(express.json());app.use(cookieParser());app.use(cors(corsOptions)); // security + JSON body parsing
+app.use(helmet()); app.use(express.json());app.use('/uploads', express.static(path.join(__dirname, 'uploads')));app.use(cookieParser());app.use(cors(corsOptions)); 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -51,16 +64,14 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 }
-// Health check
 
-app.get('/health', (_req, res) => res.json({ ok: true })); // simple readiness probe
+app.get('/health', (_req, res) => res.json({ ok: true })); 
 
-// Validation schema
 
 const SignupSchema = z.object({
 email: z.string().email().max(254),
 password: z.string().min(12).max(200),
-}); // strong basic rules
+}); 
 const IssueSchema = z.object({
   title: z.string().min(1).max(200),
   category: z.string(),
@@ -76,12 +87,11 @@ const UpdateIssueSchema = z.object({
   upvotes: z.number().optional()
 });
 
-// Signup route
 
 app.post('/auth/signup', async (req, res) => {
 try {
 const parsed = SignupSchema.safeParse(req.body);
-if (!parsed.success) return res.status(400).json({ error: 'Invalid request' }); // input validation
+if (!parsed.success) return res.status(400).json({ error: 'Invalid request' }); 
 
 const email = parsed.data.email.trim().toLowerCase(); 
 const passwordHash = await argon2.hash(parsed.data.password); 
@@ -89,25 +99,22 @@ const user = await prisma.user.create({
 data: { email, passwordHash, role: 'citizen' },
 select: { id: true, email: true, role: true, createdAt: true },
 }); 
-return res.status(201).json(user); // success response
+return res.status(201).json(user); 
 } catch (e) {
     if (
       (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') ||
       e.code === 'P2002'
     ) {
-      // Unique constraint failed on the email field
       return res.status(409).json({ error: 'Email already registered' });
     }
-    // Other errors
     return res.status(500).json({ error: 'Unexpected error' });
   }
 });
-// Replace your existing login route
 app.post('/auth/login', async (req, res) => {
   const schema = z.object({
     email: z.string().email(),
     password: z.string().min(12),
-    role: z.string().optional() // Add role to schema
+    role: z.string().optional() 
   });
 
   const parsed = schema.safeParse(req.body);
@@ -115,7 +122,7 @@ app.post('/auth/login', async (req, res) => {
 
   const email = parsed.data.email.trim().toLowerCase();
   const password = parsed.data.password;
-  const requestedRole = parsed.data.role; // Get requested role
+  const requestedRole = parsed.data.role; 
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -124,7 +131,6 @@ app.post('/auth/login', async (req, res) => {
     const valid = await argon2.verify(user.passwordHash, password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    // Check if user's role matches the requested role
     if (requestedRole && user.role !== requestedRole) {
       return res.status(403).json({ error: `Access denied. You are not authorized as ${requestedRole}.` });
     }
@@ -140,7 +146,7 @@ app.post('/auth/login', async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.json({ accessToken, role: user.role }); // Return actual role
+    return res.json({ accessToken, role: user.role }); 
   } catch (e) {
     logger.error(`Login error for email ${email}: ${e.stack || e}`);
     return res.status(500).json({ error: 'Unexpected error' });
@@ -158,7 +164,6 @@ app.post('/auth/refresh', async (req, res) => {
     try {
       payload = jwt.verify(token, JWT_REFRESH_SECRET);
     } catch (e) {
-      // Invalid or expired token - clear cookie and reject
       res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -168,7 +173,6 @@ app.post('/auth/refresh', async (req, res) => {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
-    // Optionally, verify the user still exists in the DB
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) {
       res.clearCookie('refreshToken', {
@@ -179,15 +183,12 @@ app.post('/auth/refresh', async (req, res) => {
       });
       return res.status(401).json({ error: 'User not found' });
     }
-
-    // Issue new access token
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       JWT_ACCESS_SECRET,
       { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
     );
 
-    // Return new access token
     return res.json({ accessToken });
   } catch (e) {
     return res.status(500).json({ error: 'Unexpected error' });
@@ -211,16 +212,13 @@ app.get('/profile', authMiddleware, async (req, res) => {
     return res.status(500).json({ error: 'Unexpected error' });
   }
 });
-// Replace your existing GET /api/issues route
 app.get('/api/issues', authMiddleware, async (req, res) => {
   try {
     let whereClause = {};
     
-    // Citizens can only see their own issues, admins see all issues
     if (req.user.role === 'citizen') {
       whereClause = { userId: req.user.id };
     }
-    // For admins, whereClause remains empty = see all issues
     
     const issues = await prisma.issue.findMany({
       where: whereClause,
@@ -242,27 +240,43 @@ app.get('/api/issues', authMiddleware, async (req, res) => {
 });
 
 
-app.post('/api/issues', authMiddleware, async (req, res) => {
+app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res) => {
   try {
-    const parsed = IssueSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid issue data' });
+    let coordinates = undefined;
+    if (req.body.coordinates) {
+      try {
+        coordinates = JSON.parse(req.body.coordinates);
+      } catch {
+        return res.status(400).json({ error: 'Coordinates must be a valid array of numbers' });
+      }
+      if (!Array.isArray(coordinates) || !coordinates.every(n => typeof n === 'number')) {
+        return res.status(400).json({ error: 'Coordinates must be an array of numbers' });
+      }
     }
+
+ 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
 
-    const issue = await prisma.issue.create({
-      data: {
-        ...parsed.data,
-        userId: req.user.id,
-        submittedBy: user?.email || 'Unknown User',
-        coordinates: parsed.data.coordinates || null,
-      },
-    });
-    return res.status(201).json(issue);
+    const issueData = {
+      title: req.body.title,
+      category: req.body.category,
+      description: req.body.description,
+      location: req.body.location,
+      priority: req.body.priority,
+      coordinates: coordinates || null,
+      userId: req.user.id,
+      submittedBy: user?.email || 'Unknown User',  
+      photoPath: req.file ? req.file.path : null
+    };
+
+    const issue = await prisma.issue.create({ data: issueData });
+    res.status(201).json(issue);
   } catch (e) {
-    return res.status(500).json({ error: 'Failed to create issue' });
+    console.error('Failed to create issue:', e);
+    res.status(500).json({ error: 'Failed to create issue', details: e.message });
   }
 });
+
 
 
 app.patch('/api/issues/:id', authMiddleware, async (req, res) => {
@@ -328,4 +342,4 @@ app.get('/api/issues/:id', authMiddleware, async (req, res) => {
 
 const PORT = process.env.PORT || 3443;
 
-app.listen(PORT, () => console.log('API listening on http://localhost:'+PORT)); // start Express
+app.listen(PORT, () => console.log('API listening on http://localhost:'+PORT)); 
