@@ -1,6 +1,6 @@
 console.log('app.js loaded');
 const backendUrl = "http://localhost:3443";
-class CivicConnectApp {
+class SkunkWorks{
     constructor() {
         this.currentRole = null;
         this.currentTab = null;
@@ -13,7 +13,6 @@ class CivicConnectApp {
         this.accessToken = localStorage.getItem('civicconnect_token') || null;
         this.init();
     }
-
     async init() {
         this.loadSampleData();
         this.setupEventListeners();
@@ -54,8 +53,6 @@ if (markersArray.length > 0) {
   const group = L.featureGroup(markersArray);
   this._adminMap.fitBounds(group.getBounds().pad(0.2));
 }
-
-
 }
 
     loadSampleData() {
@@ -74,11 +71,8 @@ if (markersArray.length > 0) {
     status: "resolved",
     coordinates: [23.3247, 85.2425],}
 ];
-
-
         this.generateAdditionalIssues();
 
-        // Load departments data
         this.departments = [
             {
                 id: "public-works",
@@ -114,7 +108,6 @@ if (markersArray.length > 0) {
             }
         ];
 
-        // Load analytics data
         this.analytics = {
             totalIssues: 0,
             resolvedIssues: 0,
@@ -124,7 +117,6 @@ if (markersArray.length > 0) {
             categoryBreakdown: {}
         };
 
-        // Load user's reports (simulated)
         this.userReports = [];
     }
 
@@ -259,19 +251,16 @@ if (logoutBtnAdmin) {
 }
 
 
-            // Tab navigation
             if (e.target.classList.contains('tab-btn')) {
                 this.switchTab(e.target.dataset.tab);
                 return;
             }
 
-            // Modal close
             if (e.target.classList.contains('modal-close')) {
                 this.closeModal();
                 return;
             }
 
-            // Issue interactions
             if (e.target.closest('.report-item') || e.target.closest('.table-row')) {
                 const issueElement = e.target.closest('.report-item, .table-row');
                 const issueId = issueElement.dataset.issueId;
@@ -281,7 +270,6 @@ if (logoutBtnAdmin) {
                 return;
             }
 
-            // Upvote handling
             if (e.target.classList.contains('upvote-btn')) {
                 e.stopPropagation();
                 const issueId = e.target.dataset.issueId;
@@ -290,7 +278,6 @@ if (logoutBtnAdmin) {
             }
         });
 
-        // Navigation
         const backToHomeBtn = document.getElementById('backToHome');
         if (backToHomeBtn) {
             backToHomeBtn.addEventListener('click', () => this.showLandingPage());
@@ -306,7 +293,6 @@ if (logoutBtnAdmin) {
             themeToggleBtn.addEventListener('click', () => this.toggleTheme());
         }
 
-        // Issue reporting form
         const issueForm = document.getElementById('issueReportForm');
         if (issueForm) {
             issueForm.addEventListener('submit', (e) => this.handleIssueSubmission(e));
@@ -332,7 +318,6 @@ if (logoutBtnAdmin) {
             useGPSBtn.addEventListener('click', () => this.useGPSLocation());
         }
 
-        // Filters
         const statusFilter = document.getElementById('statusFilter');
         if (statusFilter) {
             statusFilter.addEventListener('change', (e) => this.filterUserReports(e.target.value));
@@ -654,7 +639,7 @@ calculateAnalytics() {
       return acc + (assigned - submitted);
     }, 0);
     const avgTimeMs = totalTime / resolvedIssues.length;
-    this.analytics.avgResolutionTime = (avgTimeMs / (1000 * 60 * 60 * 24)).toFixed(1) + ' days'; // in days
+    this.analytics.avgResolutionTime = (avgTimeMs / (1000 * 60 * 60 * 24)).toFixed(1) + ' days'; 
   } else {
     this.analytics.avgResolutionTime = "N/A";
   }
@@ -766,23 +751,28 @@ async loadIssuesFromAPI() {
 
     if (response.ok) {
       const issues = await response.json();
-      
-      this.issues = issues.map(issue => ({
-        id: issue.id,
-        title: issue.title,
-        category: issue.category,
-        description: issue.description,
-        location: issue.location,
-        priority: issue.priority,
-        status: issue.status,
-        submittedBy: issue.submittedBy,
-        submittedDate: issue.createdAt,
-        assignedTo: issue.assignedTo,
-        assignedDate: issue.updatedAt,
-        upvotes: issue.upvotes || 0,
-        comments: issue.comments || 0,
-        coordinates: issue.coordinates || [40.7128 + (Math.random() - 0.5) * 0.1, -74.0060 + (Math.random() - 0.5) * 0.1]
-      }));
+  
+this.issues = issues.map(issue => ({
+  id: issue.id,
+  title: issue.title,
+  category: issue.category,
+  description: issue.description,
+  location: issue.location,
+  priority: issue.priority,
+  status: issue.status,
+  submittedBy: issue.submittedBy,
+  submittedDate: issue.createdAt,
+  assignedTo: issue.assignedTo,
+  assignedDate: issue.updatedAt,
+  photoPath: issue.photoPath || null,
+  upvotes: issue.upvotes || 0,
+  comments: issue.comments || 0,
+  coordinates: issue.coordinates || [
+    40.7128 + (Math.random() - 0.5) * 0.1,
+    -74.0060 + (Math.random() - 0.5) * 0.1,
+  ],
+}));
+
       
       if (this.currentRole === 'citizen') {
         this.userReports = [...this.issues]; 
@@ -796,8 +786,14 @@ async loadIssuesFromAPI() {
 }
 getPhotoUrl(photoPath) {
   if (!photoPath) return null;
-  return 'http://localhost:3443/' + photoPath.replace(/^\/+/, '');
+  const p = photoPath.replace(/\\/g, '/');        
+  const normalized = p.startsWith('/') ? p : '/' + p; 
+  return 'http://localhost:3443' + normalized;     
 }
+
+
+
+
 updateAnalyticsUI() {
   const totalIssuesEl = document.getElementById('totalIssuesCount');
   if (totalIssuesEl) totalIssuesEl.textContent = this.analytics.totalIssues;
@@ -889,7 +885,6 @@ switchTab(tabName) {
 
         switch (tabName) {
             case 'report':
-                // Report tab is already visible, just show notification
                 this.showNotification('Ready to report a new issue', 'info');
                 break;
             case 'track':
@@ -965,7 +960,7 @@ async handleIssueSubmission(e) {
     formData.append('coordinates', JSON.stringify(coordinates));
   }
   if (photoInput && photoInput.files.length > 0) {
-    formData.append('photo', photoInput.files);
+    formData.append('photo', photoInput.files[0]);  // UPDATED: Append the first file from the FileList (for single upload)
   }
   
   try {
@@ -989,6 +984,13 @@ async handleIssueSubmission(e) {
     this.showNotification('Issue reported successfully!', 'success');
     e.target.reset();
     this.currentCoordinates = null;
+
+    // NEW: Clear the photo preview (add this after reset to handle any rendered <img> or content in the preview div)
+    const photoPreview = document.getElementById('photoPreview');
+    if (photoPreview) {
+      photoPreview.innerHTML = '';
+    }
+
     await this.loadIssuesFromAPI();
     if (this.currentRole === 'admin' && this.currentTab === 'admin-map') {
       this.loadAdminMap();
@@ -998,10 +1000,6 @@ async handleIssueSubmission(e) {
   }
 }
 
-
-
- 
-    
 
     handlePhotoUpload(e) {
         const file = e.target.files[0];
@@ -1030,9 +1028,9 @@ async handleIssueSubmission(e) {
       const lng = position.coords.longitude.toFixed(6);
       const locationInput = document.getElementById('issueLocation');
       if (locationInput) {
-        locationInput.value = `${lat}, ${lng}`;  // Fill the form’s location input with GPS coordinates
+        locationInput.value = `${lat}, ${lng}`;  
       }
-      this.showNotification(`Location detected: ${lat}, ${lng}`, 'info');  // Show a message
+      this.showNotification(`Location detected: ${lat}, ${lng}`, 'info');  
     },
     (error) => {
       alert('Unable to retrieve your location. Please allow location access or type your location manually.');
@@ -1181,7 +1179,6 @@ async handleIssueSubmission(e) {
     }
 
     loadDashboardCharts() {
-        // Monthly trends chart
         const trendsCtx = document.getElementById('trendsChart');
         if (trendsCtx && typeof Chart !== 'undefined') {
             new Chart(trendsCtx, {
@@ -1220,7 +1217,6 @@ async handleIssueSubmission(e) {
             });
         }
 
-        // Category breakdown chart
         const categoryCtx = document.getElementById('categoryChart');
         if (categoryCtx && typeof Chart !== 'undefined') {
             new Chart(categoryCtx, {
@@ -1280,7 +1276,7 @@ async handleIssueSubmission(e) {
                 <div>${this.formatDate(issue.submittedDate)}</div>
                 <div>${issue.assignedTo || 'Unassigned'}</div>
                 <div>
-                    ${photoUrl ? `<img src="${photoUrl}" alt="Issue Photo" style="max-width:100px; max-height:80px; border-radius:4px;">` : 'No Photo'}
+                    ${photoUrl ? '<img src="${photoUrl}" alt="Issue Photo" style="max-width:100px; max-height:80px; border-radius:4px;" />' : 'No Photo'}
                 </div>
             </div>
             `;
@@ -1358,15 +1354,15 @@ async handleIssueSubmission(e) {
 
   loadAnalytics() {
   if (!this.categoryChart) {
-    this.initializeCharts();  // Initialize charts once
+    this.initializeCharts(); 
   }
-  this.updateCharts();        // Update charts with current data
-  this.updateAnalyticsUI();   // Update textual analytics UI
+  this.updateCharts();
+  this.updateAnalyticsUI();   
 }
 
 
     loadDetailedCharts() {
-        // Detailed trends chart
+  
         const detailedTrendsCtx = document.getElementById('detailedTrendsChart');
         if (detailedTrendsCtx && typeof Chart !== 'undefined') {
             new Chart(detailedTrendsCtx, {
@@ -1401,7 +1397,6 @@ async handleIssueSubmission(e) {
             });
         }
 
-        // Department performance chart
         const deptPerformanceCtx = document.getElementById('departmentPerformanceChart');
         if (deptPerformanceCtx && typeof Chart !== 'undefined') {
             new Chart(deptPerformanceCtx, {
@@ -1438,45 +1433,55 @@ async handleIssueSubmission(e) {
 
 
 
-    showIssueModal(issueId) {
-        const issue = this.issues.find(i => i.id === issueId);
-        if (!issue) return;
-        
-        const modal = document.getElementById('issueModal');
-        const modalBody = document.getElementById('modalBody');
-        
-        if (modalBody) {
-            modalBody.innerHTML = `
-                <div class="issue-details">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                        <div><strong>ID:</strong> ${issue.id}</div>
-                        <div><strong>Category:</strong> <span class="category-badge ${issue.category}">${issue.category}</span></div>
-                        <div><strong>Priority:</strong> <span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
-                        <div><strong>Status:</strong> <span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
-                        <div><strong>Location:</strong> ${issue.location}</div>
-                        <div><strong>Submitted:</strong> ${this.formatDate(issue.submittedDate)}</div>
+ showIssueModal(issueId) {
+    const issue = this.issues.find(i => i.id === issueId);
+    if (!issue) return;
+    
+    const modal = document.getElementById('issueModal');
+    const modalBody = document.getElementById('modalBody');
+    const photoUrl = this.getPhotoUrl(issue.photoPath);
+    if (modalBody) {
+        modalBody.innerHTML = `
+            <div class="issue-details">
+                ${photoUrl ? `
+                    <div style="margin-bottom: 16px; text-align: center;">
+                        <strong>Photo:</strong>
+                        <img src="${photoUrl}" alt="Issue Photo" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />
                     </div>
+                ` : `
                     <div style="margin-bottom: 16px;">
-                        <strong>Description:</strong>
-                        <p style="margin-top: 8px;">${issue.description}</p>
+                        <strong>Photo:</strong> No photo uploaded
                     </div>
-                    ${issue.assignedTo ? `<div><strong>Assigned to:</strong> ${issue.assignedTo}</div>` : ''}
-                    ${issue.estimatedCompletion ? `<div><strong>Est. Completion:</strong> ${this.formatDate(issue.estimatedCompletion)}</div>` : ''}
-                    <div style="margin-top: 16px;">
-                        <strong>Community Engagement:</strong>
-                        <div style="display: flex; gap: 16px; margin-top: 8px;">
-                            <span>👍 ${issue.upvotes} upvotes</span>
-                            <span>💬 ${issue.comments} comments</span>
-                        </div>
+                `}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div><strong>ID:</strong> ${issue.id}</div>
+                    <div><strong>Category:</strong> <span class="category-badge ${issue.category}">${issue.category}</span></div>
+                    <div><strong>Priority:</strong> <span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
+                    <div><strong>Status:</strong> <span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
+                    <div><strong>Location:</strong> ${issue.location}</div>
+                    <div><strong>Submitted:</strong> ${this.formatDate(issue.submittedDate)}</div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong>Description:</strong>
+                    <p style="margin-top: 8px;">${issue.description}</p>
+                </div>
+                ${issue.assignedTo ? `<div><strong>Assigned to:</strong> ${issue.assignedTo}</div>` : ''}
+                ${issue.estimatedCompletion ? `<div><strong>Est. Completion:</strong> ${this.formatDate(issue.estimatedCompletion)}</div>` : ''}
+                <div style="margin-top: 16px;">
+                    <strong>Community Engagement:</strong>
+                    <div style="display: flex; gap: 16px; margin-top: 8px;">
+                        <span>👍 ${issue.upvotes} upvotes</span>
+                        <span>💬 ${issue.comments} comments</span>
                     </div>
                 </div>
-            `;
-        }
-        
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
+            </div>
+        `;
     }
+    
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
 
     closeModal() {
         const modal = document.getElementById('issueModal');
@@ -1541,33 +1546,37 @@ async handleIssueSubmission(e) {
         this.showNotification(`Language switched to ${this.currentLanguage === 'en' ? 'English' : 'Hindi'}`, 'info');
     }
 
-    setupTheme() {
-        // Don't use localStorage due to sandbox restrictions
-        this.setTheme('light');
-    }
 
-    toggleTheme() {
-        const newTheme = this.theme === 'light' ? 'dark' : 'light';
-        this.setTheme(newTheme);
-    }
+setupTheme() {
+  const saved = localStorage.getItem('civicconnect:theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = saved || (prefersDark ? 'dark' : 'light');
+  this.setTheme(initial);
+}
 
-    setTheme(theme) {
-        this.theme = theme;
-        document.documentElement.setAttribute('data-color-scheme', theme);
-        const themeBtn = document.getElementById('themeToggle');
-        if (themeBtn) {
-            themeBtn.textContent = theme === 'light' ? '🌙' : '☀️';
-        }
-    }
+toggleTheme() {
+  const newTheme = this.theme === 'light' ? 'dark' : 'light';
+  this.setTheme(newTheme);
+}
+
+setTheme(theme) {
+  this.theme = theme;
+  document.documentElement.setAttribute('data-color-scheme', theme);
+  localStorage.setItem('civicconnect:theme', theme); 
+
+  const themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) {
+    themeBtn.textContent = theme === 'light' ? 'Dark' : 'Light';
+  }
+}
+
 
     startRealTimeUpdates() {
-        // Simulate real-time updates every 30 seconds
         setInterval(() => {
-            if (Math.random() < 0.3) { // 30% chance of update
+            if (Math.random() < 0.3) { 
                 const randomIssue = this.issues[Math.floor(Math.random() * this.issues.length)];
                 const oldStatus = randomIssue.status;
                 
-                // Progress status
                 if (randomIssue.status === 'submitted') {
                     randomIssue.status = 'assigned';
                     randomIssue.assignedTo = this.getDepartmentForCategory(randomIssue.category);
@@ -1582,7 +1591,6 @@ async handleIssueSubmission(e) {
                 if (randomIssue.status !== oldStatus) {
                     this.showNotification(`Issue ${randomIssue.id} status updated to ${this.formatStatus(randomIssue.status)}`, 'info');
                     
-                    // Refresh current view if needed
                     if (this.currentTab === 'track' && this.currentRole === 'citizen') {
                         this.loadUserReports();
                     } else if (this.currentTab === 'manage' && this.currentRole === 'admin') {
@@ -1640,8 +1648,7 @@ async handleIssueSubmission(e) {
     }
 }
 
-// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing CivicConnect app');
-    window.civicApp = new CivicConnectApp();
+    window.civicApp = new SkunkWorks();
 });

@@ -4,26 +4,37 @@ const logger = require('./logger');
 
 require('dotenv').config(); 
 
-const express = require('express'); const rateLimit = require('express-rate-limit'); const helmet = require('helmet'); const cors = require('cors');
+const express = require('express'); 
+const rateLimit = require('express-rate-limit'); 
+const helmet = require('helmet'); 
+const cors = require('cors');
 const corsOptions = {
   origin: 'http://localhost:8080',
   credentials: true, 
   allowedHeaders: ['Content-Type', 'Authorization']
 };
-
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
+const uploadDir = path.join(__dirname, 'uploads');
+fs.mkdirSync(uploadDir, { recursive: true });
+
 const upload = multer({
-  dest: 'uploads/',
-  fileFilter: (req, file, cb) => {
-    if (/image\/(jpeg|png|jpg|webp)/.test(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
+  storage: multer.diskStorage({
+    destination: uploadDir,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const uniqueName = file.fieldname + '-' + Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+      cb(null, uniqueName);
     }
+  }),
+  fileFilter: (req, file, cb) => {
+    if (/image\/(jpeg|png|jpg|webp)/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files are allowed!'));
   },
   limits: { fileSize: 4 * 1024 * 1024 }
 });
+
 
 
 const { PrismaClient, Prisma } = require('@prisma/client');
@@ -41,7 +52,12 @@ const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 const app = express();
 
-app.use(helmet()); app.use(express.json());app.use('/uploads', express.static(path.join(__dirname, 'uploads')));app.use(cookieParser());app.use(cors(corsOptions)); 
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+})); app.use(express.json());app.use(cookieParser());
+app.use(cors(corsOptions));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -266,7 +282,7 @@ app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res)
       coordinates: coordinates || null,
       userId: req.user.id,
       submittedBy: user?.email || 'Unknown User',  
-      photoPath: req.file ? req.file.path : null
+      photoPath: req.file ? "/uploads/" + req.file.filename : null
     };
 
     const issue = await prisma.issue.create({ data: issueData });
