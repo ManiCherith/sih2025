@@ -12,6 +12,13 @@ class SkunkWorks{
         this.theme = 'light';
         this.accessToken = localStorage.getItem('civicconnect_token') || null;
         this.init();
+            this.mapFilters = {
+        category: '',
+        status: '',
+        priority: ''
+    };
+    this.heatmapEnabled = false;
+    this.heatmapLayer = null;
     }
     async init() {
         this.loadSampleData();
@@ -25,52 +32,259 @@ class SkunkWorks{
         this.startRealTimeUpdates();
     }
 _renderIssueMarkers(map) {
+const selectedCategory = (this.mapFilters.category || '').trim().toLowerCase();
+const selectedStatus   = (this.mapFilters.status || '').trim().toLowerCase();
+const selectedPriority = (this.mapFilters.priority || '').trim().toLowerCase();
+
+
+    console.log('Rendering markers...');
+    console.log('Issues to render:', this.issues.length);
+    
     if (this._issueMarkersLayer) {
         this._issueMarkersLayer.clearLayers();
     } else {
         this._issueMarkersLayer = L.layerGroup().addTo(map);
     }
-    const markersArray = [];
-this.issues.forEach(issue => {
-  let coords = null;
+    if (this.heatmapLayer) {
+        map.removeLayer(this.heatmapLayer);
+        this.heatmapLayer = null;
+    }
 
-  if (issue.coordinates && issue.coordinates.length === 2) {
-    coords = issue.coordinates;
-  } else if (issue.approxCoordinates && issue.approxCoordinates.length === 2) {
-    coords = issue.approxCoordinates;
-  }
+    let filteredIssues = this.issues;
 
-  if (!coords) {
-    return;
-  }
 
-  const [lat, lng] = coords;
-  const marker = L.marker([lat, lng])
-    .bindPopup(`<b>${issue.title}</b><br>${issue.location}<br>Status: ${this.formatStatus(issue.status)}`);
-  this._adminMap.addLayer(marker);
-});
-if (markersArray.length > 0) {
-  const group = L.featureGroup(markersArray);
-  this._adminMap.fitBounds(group.getBounds().pad(0.2));
+ if (selectedCategory && selectedCategory !== 'all') {
+  filteredIssues = filteredIssues.filter(issue =>
+    (issue.category || '').trim().toLowerCase() === selectedCategory
+  );
 }
+
+if (selectedStatus && selectedStatus !== 'all') {
+  filteredIssues = filteredIssues.filter(issue =>
+    (issue.status || '').trim().toLowerCase() === selectedStatus
+  );
+}
+
+if (selectedPriority && selectedPriority !== 'all') {
+  filteredIssues = filteredIssues.filter(issue =>
+    (issue.priority || '').trim().toLowerCase() === selectedPriority
+  );
+}
+
+    console.log('Filtered issues count:', filteredIssues.length);
+
+    const markersArray = [];
+    const heatmapData = [];
+
+    filteredIssues.forEach(issue => {
+        let coords = null;
+        if (issue.coordinates && issue.coordinates.length === 2) {
+            coords = issue.coordinates;
+        } else if (issue.approxCoordinates && issue.approxCoordinates.length === 2) {
+            coords = issue.approxCoordinates;
+        }
+
+        if (!coords) {
+            console.log('No coordinates for issue:', issue.id);
+            return;
+        }
+
+        const [lat, lng] = coords;
+        console.log('Creating marker at:', lat, lng);
+        
+        const markerColor = this.getMarkerColorByStatus(issue.status);
+        const markerIcon = this.createColoredMarkerIcon(markerColor);
+        
+        const marker = L.marker([lat, lng], { icon: markerIcon })
+            .bindPopup(`
+                <div class="map-popup">
+                    <h4>${issue.title}</h4>
+                    <p><strong>Category:</strong> ${issue.category}</p>
+                    <p><strong>Location:</strong> ${issue.location}</p>
+                    <p><strong>Status:</strong> <span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></p>
+                    <p><strong>Priority:</strong> ${issue.priority}</p>
+                    <p>${issue.description}</p>
+                    ${this.getPopupImage(issue)}
+                </div>
+            `);
+
+        this._issueMarkersLayer.addLayer(marker);
+        markersArray.push(marker);
+
+        
+        const weight = this.getIssueWeight(issue);
+        heatmapData.push([lat, lng, weight]);
+    });
+
+    console.log('Markers created:', markersArray.length);
+    console.log('Heatmap data points:', heatmapData.length);
+
+    if (this.heatmapEnabled && heatmapData.length > 0) {
+        this.renderHeatmap(map, heatmapData);
+    }
+
+    if (markersArray.length > 0) {
+        const group = L.featureGroup(markersArray);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+
+  
+    this.updateFilteredIssueCount(filteredIssues.length);
+}
+
+getPopupImage(issue) {
+    if (issue.status === 'resolved' && issue.resolutionPhotoPath) {
+        return `
+            <div style="text-align: center; margin-top: 8px;">
+                <div style="background: #dcfce7; padding: 4px 8px; border-radius: 4px; margin-bottom: 8px;">
+                    <span style="color: #16a34a; font-size: 12px; font-weight: bold;">✅ RESOLVED</span>
+                </div>
+                <img src="${this.getPhotoUrl(issue.resolutionPhotoPath)}" 
+                     style="max-width: 100%; height: auto; max-height: 200px; border-radius: 4px; border: 2px solid #22c55e;" 
+                     alt="Resolution photo" />
+            </div>
+        `;
+    } else if (issue.photoPath) {
+        return `
+            <div style="text-align: center; margin-top: 8px;">
+                <img src="${this.getPhotoUrl(issue.photoPath)}" 
+                     style="max-width: 100%; height: auto; max-height: 200px; border-radius: 4px;" 
+                     alt="Issue photo" />
+            </div>
+        `;
+    }
+    return '';
+}
+
+
+    getMarkerColorByStatus(status) {
+        const colorMap = {
+            'submitted': '#f57c00',     
+            'assigned': '#00695c',     
+            'in-progress': '#1976d2',    
+            'resolved': '#2e7d32'       
+        };
+        return colorMap[status] || '#666666'; 
+    }
+createColoredMarkerIcon(color) {
+    const svg = `
+        <svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+            <!-- Main pin shape -->
+            <path d="M15 5 C22 5, 27 10, 27 17 C27 25, 15 35, 15 35 S3 25, 3 17 C3 10, 8 5, 15 5 Z" fill="${color}"/>
+            <!-- Inner white circle -->
+            <circle cx="15" cy="17" r="7" fill="white"/>
+            <!-- Optional: Inner colored circle for better visibility -->
+            <circle cx="15" cy="17" r="4" fill="${color}" opacity="0.3"/>
+        </svg>
+    `;
+
+    return L.divIcon({
+        className: 'simple-pin-marker',
+        html: svg,
+        iconSize: [30, 40],
+        iconAnchor: [15, 35],
+        popupAnchor: [0, -35]
+    });
+}
+
+
+
+getIssueWeight(issue) {
+    let weight = 1;
+    
+    const priorityWeights = {
+        'low': 1,
+        'medium': 2,
+        'high': 3,
+        'urgent': 4
+    };
+    weight *= priorityWeights[issue.priority] || 1;
+    
+    const statusWeights = {
+        'submitted': 3,
+        'assigned': 2,
+        'in-progress': 1.5,
+        'resolved': 0.5
+    };
+    weight *= statusWeights[issue.status] || 1;
+    
+    return weight;
+}
+renderHeatmap(map, heatmapData) {
+    console.log('Rendering heatmap with data:', heatmapData);
+    
+    if (!window.L.heatLayer) {
+        console.error('Leaflet.heat plugin not loaded. Make sure to include leaflet-heat.js');
+        this.showNotification('Heatmap plugin not available', 'error');
+        return;
+    }
+
+    try {
+        this.heatmapLayer = L.heatLayer(heatmapData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            max: 1.0,
+            gradient: {
+                0.0: '#313695',
+                0.1: '#4575b4', 
+                0.2: '#74add1',
+                0.3: '#abd9e9',
+                0.4: '#e0f3f8',
+                0.5: '#ffffcc',
+                0.6: '#fed976',
+                0.7: '#fd8d3c',
+                0.8: '#f03b20',
+                1.0: '#bd0026'
+            }
+        }).addTo(map);
+        
+        console.log('Heatmap layer created successfully');
+    } catch (error) {
+        console.error('Error creating heatmap:', error);
+        this.showNotification('Error creating heatmap', 'error');
+    }
 }
 
     loadSampleData() {
         this.issues = [
-  {
-    id: "test1",
-    title: "Test Issue 1",
-    location: "Location A",
-    status: "open",
-    coordinates: [23.367, 85.317], 
-  },
-  {
-    id: "test2",
-    title: "Test Issue 2",
-    location: "Location B",
-    status: "resolved",
-    coordinates: [23.3247, 85.2425],}
-];
+        {
+            id: "test1",
+            title: "Test Issue 1",
+            location: "Location A",
+            status: "submitted",        // Changed from "open"
+            assignedTo: null,           // Added explicitly
+            category: "potholes",       // Added category
+            priority: "medium",         // Added priority
+            description: "Test description for issue 1",
+            submittedBy: "test@example.com",
+            submittedDate: new Date().toISOString(),
+            assignedDate: null,
+            upvotes: 0,
+            comments: 0,
+            coordinates: [23.367, 85.317],
+            photoPath: null,
+            resolutionPhotoPath: null
+        },
+        {
+            id: "test2",
+            title: "Test Issue 2", 
+            location: "Location B",
+            status: "submitted",        // Changed from "resolved"
+            assignedTo: null,           // Added explicitly
+            category: "streetlights",   // Added category
+            priority: "low",            // Added priority
+            description: "Test description for issue 2",
+            submittedBy: "test2@example.com",
+            submittedDate: new Date().toISOString(),
+            assignedDate: null,
+            upvotes: 0,
+            comments: 0,
+            coordinates: [23.3247, 85.2425],
+            photoPath: null,
+            resolutionPhotoPath: null
+        }
+    ];
         this.generateAdditionalIssues();
 
         this.departments = [
@@ -277,6 +491,7 @@ if (logoutBtnAdmin) {
                 return;
             }
         });
+        
 
         const backToHomeBtn = document.getElementById('backToHome');
         if (backToHomeBtn) {
@@ -323,10 +538,40 @@ if (logoutBtnAdmin) {
             statusFilter.addEventListener('change', (e) => this.filterUserReports(e.target.value));
         }
 
-        const mapCategoryFilter = document.getElementById('mapCategoryFilter');
-        if (mapCategoryFilter) {
-            mapCategoryFilter.addEventListener('change', (e) => this.filterMapIssues(e.target.value));
-        }
+       const mapCategoryFilter = document.getElementById('mapCategoryFilter');
+       if (mapCategoryFilter) {
+       mapCategoryFilter.addEventListener('change', (e) => {
+        this.filterMapByCategory(e.target.value);
+       });
+         }
+
+const mapStatusFilter = document.getElementById('mapStatusFilter');
+if (mapStatusFilter) {
+    mapStatusFilter.addEventListener('change', (e) => {
+        this.filterMapByStatus(e.target.value);
+    });
+}
+const mapPriorityFilter = document.getElementById('mapPriorityFilter');
+if (mapPriorityFilter) {
+    mapPriorityFilter.addEventListener('change', (e) => {
+        this.filterMapByPriority(e.target.value);
+    });
+}
+
+const toggleHeatmap = document.getElementById('toggleHeatmap');
+if (toggleHeatmap) {
+    toggleHeatmap.addEventListener('click', () => {
+        this.toggleHeatmap();
+    });
+}
+
+const clearMapFilters = document.getElementById('clearMapFilters');
+if (clearMapFilters) {
+    clearMapFilters.addEventListener('click', () => {
+        this.clearMapFilters();
+    });
+}
+
 
         const searchIssues = document.getElementById('searchIssues');
         if (searchIssues) {
@@ -348,10 +593,6 @@ if (logoutBtnAdmin) {
             exportData.addEventListener('click', () => this.exportData());
         }
 
-        const toggleHeatmap = document.getElementById('toggleHeatmap');
-        if (toggleHeatmap) {
-            toggleHeatmap.addEventListener('click', () => this.toggleHeatmap());
-        }
 const citizenSignupForm = document.getElementById('citizenSignupForm');
 if (citizenSignupForm && !citizenSignupForm.hasListener) {
   const form = citizenSignupForm.querySelector('form');
@@ -1095,20 +1336,21 @@ async handleIssueSubmission(e) {
             </div>
         `).join('');
     }
-      loadAdminMap() {
-        console.log('Admin map loading...')
-  const mapContainer = document.getElementById('adminMap');
-  if (!mapContainer || typeof L === 'undefined') return;
-
-  if (!this._adminMap) {
-    this._adminMap = L.map('adminMap').setView([23.35, 85.33], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(this._adminMap);
-  }
-
-  this._renderIssueMarkers(this._adminMap);
+loadAdminMap() {
+    setTimeout(() => {
+        if (!this._adminMap) {
+            this._adminMap = L.map('adminMapContainer').setView([23.35, 85.33], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(this._adminMap);
+        }
+        
+        this._adminMap.invalidateSize();
+        this._renderIssueMarkers(this._adminMap);
+    }, 100);
 }
+
 
     loadCommunityMap() {
   const mapContainer = document.getElementById('communityMap');
@@ -1703,10 +1945,66 @@ closeModal() {
     filterUserReports(status) {
         this.loadUserReports(status);
     }
-
-    filterMapIssues(category) {
-        this.showNotification(`Map filtered to show ${category || 'all'} issues`, 'info');
+filterMapByCategory(category = '') {
+    console.log('Filtering by category:', category);
+    this.mapFilters.category = category;
+    
+    if (this._adminMap) {
+        this._renderIssueMarkers(this._adminMap);
     }
+    
+    const filterText = category === 'all' || !category ? 'All Categories' : category;
+    this.showNotification(`Filtered by category: ${filterText}`, 'info');
+}
+
+filterMapByPriority(priority = '') {
+    this.mapFilters.priority = priority;
+    
+    if (this._adminMap) {
+        this._renderIssueMarkers(this._adminMap);
+    }
+    
+    const filterText = priority === 'all' || !priority ? 'All Priorities' : priority;
+    this.showNotification(`Filtered by priority: ${filterText}`, 'info');
+}
+  filterMapByStatus(status = '') {
+    this.mapFilters.status = status;
+    
+    if (this._adminMap) {
+        this._renderIssueMarkers(this._adminMap);
+    }
+    
+    const filterText = status === 'all' || !status ? 'All Statuses' : status;
+    this.showNotification(`Filtered by status: ${filterText}`, 'info');
+}
+updateFilteredIssueCount(count) {
+    const countEl = document.getElementById('filteredIssueCount');
+    if (countEl) {
+        countEl.textContent = `Showing ${count} issues`;
+    }
+}
+clearMapFilters() {
+    this.mapFilters = {
+        category: '',
+        status: '',
+        priority: ''
+    };
+    
+    const categoryFilter = document.getElementById('mapCategoryFilter');
+    const statusFilter = document.getElementById('mapStatusFilter');
+    const priorityFilter = document.getElementById('mapPriorityFilter');
+    
+    if (categoryFilter) categoryFilter.value = 'all';
+    if (statusFilter) statusFilter.value = 'all';
+    if (priorityFilter) priorityFilter.value = 'all';
+    
+    if (this._adminMap) {
+        this._renderIssueMarkers(this._adminMap);
+    }
+    
+    this.showNotification('All filters cleared', 'info');
+}
+
 
     exportData() {
         const data = {
@@ -1725,9 +2023,24 @@ closeModal() {
         this.showNotification('Data exported successfully', 'success');
     }
 
-    toggleHeatmap() {
-        this.showNotification('Heat map view toggled', 'info');
+   toggleHeatmap() {
+    this.heatmapEnabled = !this.heatmapEnabled;
+    
+    const toggleBtn = document.getElementById('toggleHeatmap');
+    if (toggleBtn) {
+        toggleBtn.textContent = this.heatmapEnabled ? 'Hide Heatmap' : 'Show Heatmap';
+        toggleBtn.classList.toggle('btn--primary', this.heatmapEnabled);
     }
+    
+    if (this._adminMap) {
+        this._renderIssueMarkers(this._adminMap);
+    }
+    
+    this.showNotification(
+        this.heatmapEnabled ? 'Heatmap enabled' : 'Heatmap disabled', 
+        'info'
+    );
+}
 
     toggleLanguage() {
         this.currentLanguage = this.currentLanguage === 'en' ? 'hin' : 'en';
@@ -1763,35 +2076,11 @@ setTheme(theme) {
 }
 
 
-    startRealTimeUpdates() {
-        setInterval(() => {
-            if (Math.random() < 0.3) { 
-                const randomIssue = this.issues[Math.floor(Math.random() * this.issues.length)];
-                const oldStatus = randomIssue.status;
-                
-                if (randomIssue.status === 'submitted') {
-                    randomIssue.status = 'assigned';
-                    randomIssue.assignedTo = this.getDepartmentForCategory(randomIssue.category);
-                    randomIssue.assignedDate = new Date().toISOString();
-                } else if (randomIssue.status === 'assigned') {
-                    randomIssue.status = 'in-progress';
-                } else if (randomIssue.status === 'in-progress' && Math.random() < 0.5) {
-                    randomIssue.status = 'resolved';
-                    randomIssue.resolvedDate = new Date().toISOString();
-                }
-                
-                if (randomIssue.status !== oldStatus) {
-                    this.showNotification(`Issue ${randomIssue.id} status updated to ${this.formatStatus(randomIssue.status)}`, 'info');
-                    
-                    if (this.currentTab === 'track' && this.currentRole === 'citizen') {
-                        this.loadUserReports();
-                    } else if (this.currentTab === 'manage' && this.currentRole === 'admin') {
-                        this.renderIssuesTable();
-                    }
-                }
-            }
-        }, 30000);
-    }
+startRealTimeUpdates() {
+    console.log('Real-time updates disabled');
+    return; 
+}
+
 
     showNotification(message, type = 'info') {
         const container = document.getElementById('notificationContainer');

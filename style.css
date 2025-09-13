@@ -2109,3 +2109,185 @@ body.modal-open { overflow: hidden; }
     background-color: rgba(46, 125, 50, 0.2);
     color: #a5d6a7;
 }
+/* Map filtering controls */
+.map-tools {
+    display: flex;
+    gap: var(--space-16);
+    flex-wrap: wrap;
+    align-items: center; 
+    margin-bottom: var(--space-16);
+}
+
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.filter-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.filter-group select {
+    min-width: 150px;
+}
+
+.map-stats {
+    background: var(--color-bg-1);
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-base);
+    margin-bottom: var(--space-16);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Custom marker styles */
+.custom-marker {
+    background: transparent;
+    border: none;
+}
+
+/* Map popup styles */
+.map-popup {
+    max-width: 300px;
+}
+
+.map-popup h4 {
+    margin: 0 0 var(--space-8) 0;
+    color: var(--color-text);
+}
+
+.map-popup p {
+    margin: var(--space-4) 0;
+    font-size: var(--font-size-sm);
+}
+
+.map-popup img {
+    margin-top: var(--space-8);
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive map controls */
+@media (max-width: 768px) {
+    .map-tools {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-group select {
+        min-width: auto;
+    }
+}
+/* Custom pin marker styles */
+.custom-pin-marker,
+.custom-svg-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.pin-marker {
+    cursor: pointer;
+}
+
+/* Hover effect for markers */
+.custom-pin-marker:hover,
+.custom-svg-marker:hover {
+    transform: scale(1.1);
+    z-index: 1000;
+}
+
+/* Animation when marker is added */
+@keyframes markerDrop {
+    0% {
+        transform: translateY(-20px) scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(5px) scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.custom-pin-marker,
+.custom-svg-marker {
+    animation: markerDrop 0.4s ease-out;
+}
+/* Fix for images inside Leaflet popups */
+.leaflet-popup-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 4px;
+    display: block;
+    margin: 8px auto;
+    box-sizing: border-box;
+}
+
+/* Ensure popup content has proper constraints */
+.leaflet-popup-content {
+    max-width: 300px !important;
+    min-width: 200px;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+/* Optional: Set a maximum height for very tall images */
+.leaflet-popup-content img {
+    max-height: 200px;
+    object-fit: cover;
+}
+
+/* Fix for your custom map popup class specifically */
+.map-popup img {
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 200px;
+    border-radius: 4px;
+    margin-top: 8px;
+    display: block;
+}
+/* Simple pin marker styles */
+.simple-pin-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Remove any default Leaflet marker styling */
+.simple-pin-marker svg {
+    overflow: visible;
+}
+/* Make Leaflet popup titles more visible */
+.leaflet-popup-content h4 {
+    color: #2c3e50 !important;  /* Dark blue-gray */
+    font-weight: 600 !important;
+    margin: 0 0 8px 0 !important;
+    font-size: 16px !important;
+}
+
+/* Also improve other text in popups */
+.leaflet-popup-content p {
+    color: #333333 !important;  /* Dark gray */
+    margin: 4px 0 !important;
+}
+
+/* Make status badges more visible */
+.leaflet-popup-content .status {
+    font-weight: 600 !important;
+}
+
+/* General popup content styling */
+.leaflet-popup-content {
+    color: #333333 !important;
+    font-family: var(--font-family-base) !important;
+}
+/* Fine-tune button alignment with dropdowns */
+.map-tools .btn {
+    margin-top: 8px;  /* Small adjustment to align with dropdowns */
+}

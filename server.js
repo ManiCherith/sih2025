@@ -95,12 +95,13 @@ password: z.string().min(12).max(200),
 }); 
 const IssueSchema = z.object({
   title: z.string().min(1).max(200),
-  category: z.string(),
+  category: z.enum(['potholes','streetlights','garbage','drainage','traffic','vandalism','noise','parks']),
   description: z.string().min(1),
   location: z.string().min(1),
-  priority: z.string(),
+  priority: z.enum(['low','medium','high','urgent']),
   coordinates: z.array(z.number()).optional()
 });
+
 
 const UpdateIssueSchema = z.object({
   status: z.string().optional(),
@@ -277,7 +278,7 @@ app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res)
 
     const issueData = {
       title: req.body.title,
-      category: req.body.category,
+      category: req.body.category ? req.body.category.trim().toLowerCase() : 'uncategorized',
       description: req.body.description,
       location: req.body.location,
       priority: req.body.priority,
@@ -299,37 +300,51 @@ app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res)
 
 
 app.patch('/api/issues/:id', authMiddleware, upload.single('resolutionPhoto'), async (req, res) => {
-  try {
-    const parsed = UpdateIssueSchema.safeParse(req.body);
-    console.log('UpdateIssue PATCH request body', req.body);
-    console.log('Parsed update data', parsed.data);
+    try {
+        console.log('\n=== ISSUE UPDATE DEBUG ===');
+        console.log('Timestamp:', new Date().toISOString());
+        console.log('User ID:', req.user.id);
+        console.log('User Role:', req.user.role);
+        console.log('Issue ID:', req.params.id);
+        console.log('Request Body:', JSON.stringify(req.body, null, 2));
+        console.log('Request Headers:', JSON.stringify(req.headers, null, 2));
+        console.log('Stack trace:');
+        console.trace();
+        console.log('==========================\n');
 
-    if (!parsed.success) return res.status(400).json({ error: 'Invalid update data' });
+        const parsed = UpdateIssueSchema.safeParse(req.body);
+        
+        if (!parsed.success) {
+            console.log('Validation failed:', parsed.error);
+            return res.status(400).json({ error: 'Invalid update data' });
+        }
 
-    if (req.user.role !== 'admin' && parsed.data.status) {
-      return res.status(403).json({ error: 'Admin access required for status updates' });
+        if (req.user.role !== 'admin' && parsed.data.status) {
+            return res.status(403).json({ error: 'Admin access required for status updates' });
+        }
+
+        const updateData = { ...parsed.data };
+        if (req.file) {
+            updateData.resolutionPhotoPath = "/uploads/" + req.file.filename;
+        }
+
+        console.log('Final Update Data:', JSON.stringify(updateData, null, 2));
+
+        const issue = await prisma.issue.update({
+            where: { id: req.params.id },
+            data: updateData,
+            include: { user: { select: { email: true } } }
+        });
+
+        console.log('Updated Issue Result:', JSON.stringify(issue, null, 2));
+        return res.json(issue);
+    } catch (e) {
+        if (e.code === 'P2025') return res.status(404).json({ error: 'Issue not found' });
+        logger.error('Update issue error', e.stack || e);
+        return res.status(500).json({ error: 'Failed to update issue' });
     }
-
-    const updateData = { ...parsed.data };
-
-    if (req.file) {
-      updateData.resolutionPhotoPath = "/uploads/" + req.file.filename;
-      console.log('Uploaded file:', req.file);
-    }
-
-    const issue = await prisma.issue.update({
-      where: { id: req.params.id },
-      data: updateData,
-      include: { user: { select: { email: true } } }
-    });
-
-    return res.json(issue);
-  } catch (e) {
-    if (e.code === 'P2025') return res.status(404).json({ error: 'Issue not found' });
-    logger.error('Update issue error', e.stack || e);
-    return res.status(500).json({ error: 'Failed to update issue' });
-  }
 });
+
 
 
 app.get('/api/issues/:id', authMiddleware, async (req, res) => {

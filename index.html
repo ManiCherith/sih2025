@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MadMaxPrototype1 - Issue Reporting System</title>
+    <title>SkunkWorksProtoype1</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
@@ -16,6 +16,8 @@
   crossorigin=""
   defer
   ></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
 
 </head>
 <body>
@@ -24,7 +26,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1>MMP1</h1>
+                    <h1>SkunkWorksProtoype1</h1>
                     <span class="tagline">Connecting Citizens & Government</span>
                 </div>
                 <div class="header-actions">
@@ -384,37 +386,80 @@
                     </div>
                 </div>
 
-                <!-- Community Map Tab -->
+                <!-- Admin Map Tab -->
                 <div id="admin-mapTab" class="tab-content">
-                    <div class="map-controls">
-                        <h3>Admin Map</h3>
-                        <div class="map-filters">
-                            <select id="mapCategoryFilter" class="form-control">
-                                <option value="">All Categories</option>
-                                <option value="potholes">Potholes</option>
-                                <option value="streetlights">Streetlights</option>
-                                <option value="garbage">Garbage</option>
-                                <option value="drainage">Drainage</option>
-                                <option value="traffic">Traffic</option>
-                                <option value="vandalism">Vandalism</option>
-                                <option value="noise">Noise</option>
-                                <option value="parks">Parks</option>
-                            </select>
-                            <button id="toggleHeatmap" class="btn btn--outline">Click here Heat Map</button>
-                        </div>
-                    </div>
-                    <div id="adminMap" class="map-container">
-                        <div class="map-placeholder">
-                            <div class="map-legend">
-                                <h4>Issue Status Legend</h4>
-                                <div class="legend-item"><span class="legend-dot submitted"></span> Submitted</div>
-                                <div class="legend-item"><span class="legend-dot assigned"></span> Assigned</div>
-                                <div class="legend-item"><span class="legend-dot in-progress"></span> In Progress</div>
-                                <div class="legend-item"><span class="legend-dot resolved"></span> Resolved</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="admin-map-controls">
+        <h3>Issue Map</h3>
+        <div class="map-tools">
+            <div class="filter-group">
+                <label for="mapCategoryFilter">Category:</label>
+                <select id="mapCategoryFilter" class="form-control">
+                    <option value="all">All Categories</option>
+                    <option value="potholes">Potholes</option>
+                    <option value="streetlights">Street Lights</option>
+                    <option value="garbage">Garbage</option>
+                    <option value="drainage">Drainage</option>
+                    <option value="traffic">Traffic</option>
+                    <option value="vandalism">Vandalism</option>
+                    <option value="noise">Noise</option>
+                    <option value="parks">Parks</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="mapStatusFilter">Status:</label>
+                <select id="mapStatusFilter" class="form-control">
+                    <option value="all">All Statuses</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+            </div>
+            <div class="filter-group">
+        <label for="mapPriorityFilter">Priority:</label>
+        <select id="mapPriorityFilter" class="form-control">
+            <option value="all">All Priorities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+        </select>
+    </div>
+            
+            <button id="toggleHeatmap" class="btn btn--secondary">Show Heatmap</button>
+            <button id="clearMapFilters" class="btn btn--outline">Clear Filters</button>
+        </div>
+        
+        <div class="map-stats">
+            <span id="filteredIssueCount">Loading...</span>
+        </div>
+    </div>
+    
+    <div id="adminMapContainer" class="admin-map map-container"></div>
+    
+    <!-- Map Legend -->
+    <div class="map-legend">
+        <h4>Legend</h4>
+        <div class="legend-item">
+            <span class="legend-dot" style="background-color: #f57c00;"></span>
+            <span>Submitted</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot" style="background-color: #00695c;"></span>
+            <span>Assigned</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot" style="background-color: #1976d2;"></span>
+            <span>In Progress</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot" style="background-color: #2e7d32;"></span>
+            <span>Resolved</span>
+        </div>
+    </div>
+</div>
+
 
             </div>
         </section>
