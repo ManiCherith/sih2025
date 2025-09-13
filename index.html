@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkunkWorksProtoype1</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -367,6 +366,28 @@
                 <div id="analyticsTab" class="tab-content">
                     <h3>Analytics & Reports</h3>
                     <div class="analytics-dashboard">
+                        <div class="charts-grid">
+                         <div class="chart-container">
+                        <h3>Issues by Category</h3>
+    <canvas id="issuesByCategoryChart" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Issues by Status</h3>
+    <canvas id="issuesByStatusChart" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Issues by Priority</h3>
+    <canvas id="issuesByPriorityChart" width="400" height="200"></canvas>
+    </div>
+       <div class="chart-container">
+        <h3>Issues by Overtime</h3>
+    <canvas id="issuesOverTimeChart" width="600" height="300"></canvas>
+    </div>
+    <div class="metric-container">
+           <h3>Average Resolution Time</h3>
+       <div id="averageResolutionTime"></div>
+     </div>
+    </div>
                         <div class="analytics-controls">
                             <select class="form-control">
                                 <option>Last 30 Days</option>
@@ -515,7 +536,7 @@
 
 
     <div id="notificationContainer" class="notification-container"></div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="app.js"></script>
    <script>
 window.addEventListener('load', function() {

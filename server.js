@@ -1,4 +1,8 @@
 const logger = require('./logger');
+BigInt.prototype.toJSON = function () {
+  return this.toString();  
+};
+
 
 'use strict';
 
@@ -344,6 +348,76 @@ app.patch('/api/issues/:id', authMiddleware, upload.single('resolutionPhoto'), a
         return res.status(500).json({ error: 'Failed to update issue' });
     }
 });
+app.get('/api/analytics/issues-by-category', authMiddleware, async (req, res) => {
+  try {
+    const results = await prisma.issue.groupBy({
+      by: ['category'],
+      _count: { category: true },
+    });
+    return res.json(results);
+  } catch (e) {
+    console.error('Analytics error:', e);
+    return res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+app.get('/api/analytics/issues-by-status', authMiddleware, async (req, res) => {
+  try {
+    const results = await prisma.issue.groupBy({
+      by: ['status'],
+      _count: { status: true },
+    });
+    return res.json(results);
+  } catch (e) {
+    console.error('Analytics error (by status):', e);
+    return res.status(500).json({ error: 'Failed to fetch analytics by status' });
+  }
+});app.get('/api/analytics/issues-by-priority', authMiddleware, async (req, res) => {
+  try {
+    const results = await prisma.issue.groupBy({
+      by: ['priority'],
+      _count: { priority: true },
+    });
+    return res.json(results);
+  } catch (e) {
+    console.error('Analytics error (by priority):', e);
+    return res.status(500).json({ error: 'Failed to fetch analytics by priority' });
+  }
+});
+app.get('/api/analytics/average-resolution-time', authMiddleware, async (req, res) => {
+  try {
+    const result = await prisma.$queryRaw`
+      SELECT AVG(EXTRACT(EPOCH FROM ("resolvedAt" - "createdAt")) / 3600) AS avg_resolution_hours
+      FROM "Issue"
+      WHERE "resolvedAt" IS NOT NULL;
+    `;
+    return res.json({ averageResolutionHours: result[0].avg_resolution_hours });
+  } catch (e) {
+    console.error('Analytics error (avg resolution time):', e);
+    return res.status(500).json({ error: 'Failed to fetch average resolution time' });
+  }
+});
+app.get('/api/analytics/issues-over-time', authMiddleware, async (req, res) => {
+  try {
+    const result = await prisma.$queryRaw`
+      SELECT 
+        TO_CHAR("createdAt", 'YYYY-MM') AS year_month, 
+        COUNT(*) AS count
+      FROM "Issue"
+      GROUP BY year_month
+      ORDER BY year_month;
+    `;
+    const fixedResult = result.map(item => ({
+      year_month: item.year_month,
+      count: Number(item.count) 
+    }));
+    return res.json(fixedResult);
+  } catch (e) {
+    console.error('Analytics error (issues over time):', e);
+    return res.status(500).json({ error: 'Failed to fetch issues over time' });
+  }
+});
+
+
 
 
 

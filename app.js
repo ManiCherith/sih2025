@@ -20,17 +20,35 @@ class SkunkWorks{
     this.heatmapEnabled = false;
     this.heatmapLayer = null;
     }
-    async init() {
-        this.loadSampleData();
-        this.setupEventListeners();
-        this.setupNavigationHistory();
-        this.setupTheme();
-        const isAuthenticated = await this.checkAuthStatus();
-    if (!isAuthenticated) {
-      this.showLandingPage();
-    }
-        this.startRealTimeUpdates();
-    }
+async init() {
+  this.setupEventListeners();
+  this.setupNavigation();
+  this.setupTheme();
+
+  const isAuthenticated = await this.checkAuthStatus();
+  if (!isAuthenticated) {
+    this.showLandingPage();
+    return;
+  }
+
+  document.getElementById('btnGenerateReport').addEventListener('click', async () => {
+    await this.renderIssuesByStatusChart();
+    await this.renderIssuesByCategoryChart();
+    await this.renderIssuesByPriorityChart();
+    await this.renderAverageResolutionTime();
+    await this.renderIssuesOverTimeChart();
+    
+  });
+  await this.loadAnalytics();
+  await this.renderIssuesByCategoryChart();
+  await this.renderIssuesByStatusChart();
+  await this.renderIssuesByPriorityChart();
+  await this.renderAverageResolutionTime();
+  await this.renderIssuesOverTimeChart();
+
+  this.startRealTimeUpdates();
+}
+
 _renderIssueMarkers(map) {
 const selectedCategory = (this.mapFilters.category || '').trim().toLowerCase();
 const selectedStatus   = (this.mapFilters.status || '').trim().toLowerCase();
@@ -864,7 +882,8 @@ calculateAnalytics() {
     this.analytics = {
       totalIssues: 0,
       resolvedIssues: 0,
-      avgResolutionTime: "",
+      avgResolutionTime: "N/A",
+      averageResolution: { averageResolutionHours: 0 },
     };
     return;
   }
@@ -872,17 +891,29 @@ calculateAnalytics() {
   this.analytics.totalIssues = this.issues.length;
   this.analytics.resolvedIssues = this.issues.filter(issue => issue.status === 'resolved').length;
 
-  const resolvedIssues = this.issues.filter(issue => issue.status === 'resolved' && issue.submittedDate && issue.assignedDate);
-  if (resolvedIssues.length > 0) {
-    const totalTime = resolvedIssues.reduce((acc, issue) => {
+  const resolvedWithTimes = this.issues.filter(issue => {
+    const submitted = issue.submittedDate ? new Date(issue.submittedDate) : null;
+    const resolvedTs = issue.resolvedAt || issue.closedAt || issue.updatedAt || null;
+    const resolved = resolvedTs ? new Date(resolvedTs) : null;
+    return submitted && resolved && resolved > submitted;
+  });
+
+  if (resolvedWithTimes.length > 0) {
+    const totalMs = resolvedWithTimes.reduce((acc, issue) => {
       const submitted = new Date(issue.submittedDate);
-      const assigned = new Date(issue.assignedDate);
-      return acc + (assigned - submitted);
+      const resolvedTs = issue.resolvedAt || issue.closedAt || issue.updatedAt;
+      const resolved = new Date(resolvedTs);
+      return acc + (resolved - submitted);
     }, 0);
-    const avgTimeMs = totalTime / resolvedIssues.length;
-    this.analytics.avgResolutionTime = (avgTimeMs / (1000 * 60 * 60 * 24)).toFixed(1) + ' days'; 
+
+    const avgMs = totalMs / resolvedWithTimes.length;
+    const avgHours = avgMs / (1000 * 60 * 60);
+
+    this.analytics.avgResolutionTime = (avgHours / 24) >= 1 ? `${(avgHours/24).toFixed(1)} days` : `${avgHours.toFixed(1)} hours`;
+    this.analytics.averageResolution = { averageResolutionHours: avgHours };
   } else {
     this.analytics.avgResolutionTime = "N/A";
+    this.analytics.averageResolution = { averageResolutionHours: 0 };
   }
 
 }
@@ -1033,6 +1064,40 @@ getPhotoUrl(photoPath) {
   return 'http://localhost:3443' + normalized;     
 }
 
+// --- ADD THESE HELPERS ---
+ensureCanvasElement(id) {
+  const el = document.getElementById(id);
+  if (!el) {
+    console.warn(`Canvas "${id}" not found in DOM.`);
+    return null;
+  }
+  // If parent or element has zero size, nudge a min-height so Chart.js can measure
+  const rect = el.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    el.style.minHeight = el.style.minHeight || '260px';
+    el.style.display = el.style.display || 'block';
+  }
+  return el;
+}
+
+safeCreateOrDestroyChart(key, canvasEl, config) {
+  try {
+    if (!canvasEl) return null;
+    // destroy existing instance stored on `this._charts` keyed by name
+    this._charts = this._charts || {};
+    if (this._charts[key]) {
+      try { this._charts[key].destroy(); } catch(e){ /* ignore */ }
+      this._charts[key] = null;
+    }
+    // allow passing either canvas element or 2d context
+    const ctx = (canvasEl.getContext ? canvasEl.getContext('2d') : canvasEl);
+    this._charts[key] = new Chart(ctx, config);
+    return this._charts[key];
+  } catch (err) {
+    console.error(`Failed to create chart ${key}:`, err);
+    return null;
+  }
+}
 
 
 
@@ -1057,21 +1122,142 @@ initializeCharts() {
 }
 
 updateCharts() {
-  const labels = Object.keys(this.analytics.categoryBreakdown);
-  const data = Object.values(this.analytics.categoryBreakdown);
+  const categoryBreakdown = this.analytics.categoryBreakdown || {};
+  const statusBreakdown = this.analytics.statusBreakdown || {};
+  const priorityBreakdown = this.analytics.priorityBreakdown || {};
+  const avgResolution = this.analytics.averageResolutionTime || 0;
+  const issuesOverTime = this.analytics.issuesOverTime || [];
 
-  if (this.categoryChart) {
-    this.categoryChart.data.labels = labels;
-    this.categoryChart.data.datasets[0].data = data;
-    this.categoryChart.update();
-  }
+  const categoryLabels = Object.keys(categoryBreakdown);
+  const categoryCounts = Object.values(categoryBreakdown);
+
+  const ctxCategory = document.getElementById('issuesByCategoryChart').getContext('2d');
+  if (this.categoryChart) this.categoryChart.destroy();
+  this.categoryChart = new Chart(ctxCategory, {
+    type: 'bar',
+    data: {
+      labels: categoryLabels,
+      datasets: [{
+        label: 'Issues by Category',
+        data: categoryCounts,
+        backgroundColor: 'rgba(33, 128, 141, 0.7)',
+        borderColor: 'rgba(33, 128, 141, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true } },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+
+  const statusLabels = Object.keys(statusBreakdown);
+  const statusCounts = Object.values(statusBreakdown);
+
+  const ctxStatus = document.getElementById('issuesByStatusChart').getContext('2d');
+  if (this.statusChart) this.statusChart.destroy();
+  this.statusChart = new Chart(ctxStatus, {
+    type: 'pie',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        data: statusCounts,
+        backgroundColor: ['#f59e0b', '#06b6d4', '#3b82f6', '#10b981', '#6b7280']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+
+  const priorityLabels = Object.keys(priorityBreakdown);
+  const priorityCounts = Object.values(priorityBreakdown);
+
+  const ctxPriority = document.getElementById('issuesByPriorityChart').getContext('2d');
+  if (this.priorityChart) this.priorityChart.destroy();
+  this.priorityChart = new Chart(ctxPriority, {
+    type: 'bar',
+    data: {
+      labels: priorityLabels,
+      datasets: [{
+        label: 'Issues by Priority',
+        data: priorityCounts,
+        backgroundColor: 'rgba(234, 88, 12, 0.7)',
+        borderColor: 'rgba(194, 65, 12, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true } },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+
+  const avgResolutionElement = document.getElementById('avgResolutionTime');
+  avgResolutionElement.textContent =
+    `Average resolution time: ${avgResolution.toFixed(2)} hours`;
+
+  const timeLabels = issuesOverTime.map(item => item.year_month);
+  const timeCounts = issuesOverTime.map(item => parseInt(item.count, 10));
+
+  const ctxTime = document.getElementById('issuesOverTimeChart').getContext('2d');
+  if (this.timeChart) this.timeChart.destroy();
+  this.timeChart = new Chart(ctxTime, {
+    type: 'line',
+    data: {
+      labels: timeLabels,
+      datasets: [{
+        label: 'Issues Reported',
+        data: timeCounts,
+        borderColor: 'rgba(37, 99, 235, 0.8)',
+        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true } },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
 }
-
-
+redrawAllCharts() {
+  if (typeof Chart === 'undefined') return;
+  document.querySelectorAll('canvas').forEach(c => {
+    try {
+      const inst = Chart.getChart(c) || (this._charts && Object.values(this._charts).find(ch => ch && ch.canvas && ch.canvas.id === c.id));
+      if (inst) { inst.resize(); inst.update(); }
+    } catch(e){ /* ignore */ }
+  });
+}
 
 switchTab(tabName) {
     console.log('Switching to tab:', tabName);
     this.currentTab = tabName;
+if (tabName === 'analytics') {
+  setTimeout(async () => {
+    await this.loadAnalytics();
+
+    const initIfReady = () => {
+      const testCanvas = document.getElementById('issuesByCategoryChart') || document.getElementById('categoryChart');
+      if (testCanvas && testCanvas.getBoundingClientRect().width > 0) {
+        this.renderIssuesByCategoryChart();
+        this.renderIssuesByStatusChart();
+        this.renderIssuesByPriorityChart();
+        this.renderIssuesOverTimeChart();
+        this.renderAverageResolutionTime();
+      } else {
+        setTimeout(initIfReady, 150);
+      }
+    };
+    initIfReady();
+  }, 120);
+}
+
     localStorage.setItem('civicconnect_last_tab', tabName);
   localStorage.setItem('civicconnect_last_role', this.currentRole);
 
@@ -1165,6 +1351,121 @@ switchTab(tabName) {
                 break;
         }
     }
+async renderIssuesByCategoryChart() {
+  const canvas = this.ensureCanvasElement('issuesByCategoryChart');
+  if (!canvas) return;
+
+  const data = this.analytics.byCategory || [];
+  const labels = data.map(item => item.category || 'Unknown');
+  const values = data.map(item => (item._count && item._count.category) ? item._count.category : (item.count || 0));
+
+  return this.safeCreateOrDestroyChart('issuesByCategory', canvas, {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+  });
+}
+
+async renderIssuesByStatusChart() {
+  const canvas = document.getElementById('issuesByStatusChart');
+  if (!canvas) return;
+
+  const data = this.analytics.byStatus || [];
+  const labels = data.map(item => item.status);
+  const values = data.map(item => item._count.status);
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Issues by Status',
+        data: values,
+        backgroundColor: '#36A2EB'
+      }]
+    },
+    options: { responsive: true }
+  });
+}
+
+async renderIssuesByPriorityChart() {
+  const canvas = document.getElementById('issuesByPriorityChart');
+  if (!canvas) return;
+
+  const data = this.analytics.byPriority || [];
+  const labels = data.map(item => item.priority);
+  const values = data.map(item => item._count.priority);
+
+  new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: ['#FFCE56', '#FF6384', '#4BC0C0']
+      }]
+    },
+    options: { responsive: true }
+  });
+}
+
+async renderIssuesOverTimeChart() {
+  const canvas = document.getElementById('issuesOverTimeChart');
+  if (!canvas) return;
+
+  const data = this.analytics.overTime || [];
+  const labels = data.map(item => item.year_month);
+  const values = data.map(item => item.count);
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Issues Over Time',
+        data: values,
+        borderColor: '#4BC0C0',
+        fill: false
+      }]
+    },
+    options: { responsive: true }
+  });
+}
+
+async renderAverageResolutionTime() {
+  const element = document.getElementById('avgResolutionTime') || document.getElementById('averageResolutionTime') || document.querySelector('.average-resolution-time');
+  if (!element) return;
+
+  let avgHours = 0;
+  if (this.analytics && this.analytics.averageResolution && typeof this.analytics.averageResolution.averageResolutionHours === 'number') {
+    avgHours = this.analytics.averageResolution.averageResolutionHours;
+  } else if (this.analytics && typeof this.analytics.avgResolutionTime === 'string') {
+    const s = this.analytics.avgResolutionTime;
+    const mDays = s.match(/([\d.]+)\s*days?/i);
+    const mHours = s.match(/([\d.]+)\s*hours?/i);
+    if (mDays) avgHours = parseFloat(mDays[1]) * 24;
+    else if (mHours) avgHours = parseFloat(mHours[1]);
+  }
+
+  if (!isFinite(avgHours) || avgHours <= 0) {
+    element.innerHTML = 'N/A';
+    return;
+  }
+
+  if (avgHours >= 24) {
+    element.innerHTML = `${(avgHours/24).toFixed(1)} days`;
+  } else {
+    element.innerHTML = `${Math.round(avgHours)} hours`;
+  }
+}
+
+
 async handleIssueSubmission(e) {
   e.preventDefault();
 
@@ -1595,13 +1896,38 @@ loadAdminMap() {
         `).join('');
     }
 
-  loadAnalytics() {
-  if (!this.categoryChart) {
-    this.initializeCharts(); 
+async loadAnalytics() {
+  try {
+    const headers = { Authorization: `Bearer ${this.accessToken}` };
+    
+    const categoryRes = await fetch(`${backendUrl}/api/analytics/issues-by-category`, { headers });
+    this.analytics.byCategory = await categoryRes.json();
+    
+    const statusRes = await fetch(`${backendUrl}/api/analytics/issues-by-status`, { headers });
+    this.analytics.byStatus = await statusRes.json();
+    
+    const priorityRes = await fetch(`${backendUrl}/api/analytics/issues-by-priority`, { headers });
+    this.analytics.byPriority = await priorityRes.json();
+    
+    const avgRes = await fetch(`${backendUrl}/api/analytics/average-resolution-time`, { headers });
+    this.analytics.averageResolution = await avgRes.json();
+
+    const overTimeRes = await fetch(`${backendUrl}/api/analytics/issues-over-time`, { headers });
+    this.analytics.overTime = await overTimeRes.json();
+  } catch (error) {
+    console.error('Failed to load analytics:', error);
   }
-  this.updateCharts();
-  this.updateAnalyticsUI();   
 }
+
+
+convertArrayToObject(arr, keyField, countField) {
+  const obj = {};
+  arr.forEach(item => {
+    obj[item[keyField]] = item[countField][keyField] || 0;
+  });
+  return obj;
+}
+
 
 
     loadDetailedCharts() {

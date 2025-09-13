@@ -36,6 +36,7 @@ model Issue {
   upvotes               Int      @default(0) 
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt 
+  resolvedAt            DateTime?
 
 
   user User @relation(fields: [userId], references: [id])
