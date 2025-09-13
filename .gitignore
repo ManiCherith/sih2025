@@ -53,3 +53,20 @@ Thumbs.db
 .cache/
 .tmp/
 temp/
+
+# Security - SSL certificates
+*.pem
+*.key
+*.crt
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Prisma generated files
+prisma/generated/
+
