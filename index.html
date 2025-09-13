@@ -420,22 +420,54 @@
         </section>
     </main>
 
-    <!-- Modals -->
-    <div id="issueModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Issue Details</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Dynamic content -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn--secondary modal-close">Close</button>
-                <button id="modalActionBtn" class="btn btn--primary">Update Status</button>
+<!-- Issue Details Modal -->
+<div id="issueModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalIssueTitle">Issue Details</h3>
+            <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="issuePhotoPreview" class="issue-photo-container"></div>
+            <div id="modalIssueInfo"></div>
+            <div id="resolutionPhotoPreview" class="resolution-photo-container" style="display: none;"></div>
+            
+            <!-- Admin Controls (only visible for admin users) -->
+            <div id="adminControls" style="display: none;">
+                <div class="form-group">
+                    <label for="departmentSelect">Assign to Department:</label>
+                    <span id="recommendedChip" class="recommended-chip"></span>
+                    <select id="departmentSelect" class="form-control">
+                        <option value="">Select Department</option>
+                    </select>
+                    <button id="saveAssignmentBtn" class="btn btn--primary btn--sm" type="button">
+                        Save Assignment
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="statusSelect">Update Status:</label>
+                    <select id="statusSelect" class="form-control">
+                        <option value="submitted">Submitted</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+                
+                <div id="resolutionPhotoGroup" class="form-group" style="display: none;">
+                    <label for="resolutionPhotoInput">Resolution Photo:</label>
+                    <input type="file" id="resolutionPhotoInput" class="form-control" accept="image/*">
+                </div>
+                
+                <button id="saveStatusBtn" class="btn btn--primary" type="button">
+                    Update Status
+                </button>
             </div>
         </div>
     </div>
+</div>
+
 
     <div id="notificationContainer" class="notification-container"></div>
 

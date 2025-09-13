@@ -765,6 +765,7 @@ this.issues = issues.map(issue => ({
   assignedTo: issue.assignedTo,
   assignedDate: issue.updatedAt,
   photoPath: issue.photoPath || null,
+  resolutionPhotoPath: issue.resolutionPhotoPath || null,
   upvotes: issue.upvotes || 0,
   comments: issue.comments || 0,
   coordinates: issue.coordinates || [
@@ -1431,64 +1432,255 @@ async handleIssueSubmission(e) {
         }
     }
 
-
-
- showIssueModal(issueId) {
+showIssueModal(issueId) {
     const issue = this.issues.find(i => i.id === issueId);
-    if (!issue) return;
-    
-    const modal = document.getElementById('issueModal');
-    const modalBody = document.getElementById('modalBody');
-    const photoUrl = this.getPhotoUrl(issue.photoPath);
-    if (modalBody) {
-        modalBody.innerHTML = `
-            <div class="issue-details">
-                ${photoUrl ? `
-                    <div style="margin-bottom: 16px; text-align: center;">
-                        <strong>Photo:</strong>
-                        <img src="${photoUrl}" alt="Issue Photo" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />
-                    </div>
-                ` : `
-                    <div style="margin-bottom: 16px;">
-                        <strong>Photo:</strong> No photo uploaded
-                    </div>
-                `}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                    <div><strong>ID:</strong> ${issue.id}</div>
-                    <div><strong>Category:</strong> <span class="category-badge ${issue.category}">${issue.category}</span></div>
-                    <div><strong>Priority:</strong> <span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
-                    <div><strong>Status:</strong> <span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
-                    <div><strong>Location:</strong> ${issue.location}</div>
-                    <div><strong>Submitted:</strong> ${this.formatDate(issue.submittedDate)}</div>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <strong>Description:</strong>
-                    <p style="margin-top: 8px;">${issue.description}</p>
-                </div>
-                ${issue.assignedTo ? `<div><strong>Assigned to:</strong> ${issue.assignedTo}</div>` : ''}
-                ${issue.estimatedCompletion ? `<div><strong>Est. Completion:</strong> ${this.formatDate(issue.estimatedCompletion)}</div>` : ''}
-                <div style="margin-top: 16px;">
-                    <strong>Community Engagement:</strong>
-                    <div style="display: flex; gap: 16px; margin-top: 8px;">
-                        <span>👍 ${issue.upvotes} upvotes</span>
-                        <span>💬 ${issue.comments} comments</span>
-                    </div>
-                </div>
-            </div>
-        `;
+    if (!issue) {
+        console.error('Issue not found:', issueId);
+        return;
     }
     
+    console.log('Current role:', this.currentRole);
+    console.log('Issue found:', issue);
+
+    const modal = document.getElementById('issueModal');
+    const modalTitle = document.getElementById('modalIssueTitle');
+    const modalInfo = document.getElementById('modalIssueInfo');
+    const issuePhotoPreview = document.getElementById('issuePhotoPreview');
+    const resolutionPhotoPreview = document.getElementById('resolutionPhotoPreview');
+    const adminControls = document.getElementById('adminControls');
+    const deptSelect = document.getElementById('departmentSelect');
+    const statusSelect = document.getElementById('statusSelect');
+    const recChip = document.getElementById('recommendedChip');
+    const resolutionPhotoGroup = document.getElementById('resolutionPhotoGroup');
+    const fileInput = document.getElementById('resolutionPhotoInput');
+
+    console.log('Admin controls element found:', !!adminControls);
+
+    if (modalTitle) modalTitle.textContent = issue.title;
+    
+if (modalInfo) {
+    modalInfo.innerHTML = `
+        <div class="issue-details-simple">
+            <div class="detail-row">
+                <span class="label">Category:</span>
+                <span class="badge category">${issue.category || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Priority:</span>
+                <span class="badge priority ${(issue.priority || '').toLowerCase()}">${issue.priority || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Status:</span>
+                <span class="badge status ${issue.status}">${this.formatStatus(issue.status)}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Location:</span>
+                <span class="value">${issue.location || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Submitted:</span>
+                <span class="value">${this.formatDate(issue.createdAt || issue.submittedDate)}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Assigned To:</span>
+                <span class="value">${issue.assignedTo || 'Not assigned'}</span>
+            </div>
+            <div class="detail-row description-row">
+                <span class="label">Description:</span>
+                <div class="description-box">${issue.description || 'N/A'}</div>
+            </div>
+        </div>
+    `;
+}
+
+
+
+    // Show issue photo (visible for both roles)
+    if (issuePhotoPreview) {
+        issuePhotoPreview.innerHTML = issue.photoPath
+            ? `<img src="${this.getPhotoUrl(issue.photoPath)}" alt="Issue photo" />`
+            : '';
+    }
+
+    // Resolution photo (visible for both roles)
+    if (resolutionPhotoPreview) {
+        if (issue.status === 'resolved' && issue.resolutionPhotoPath) {
+            resolutionPhotoPreview.style.display = 'block';
+            resolutionPhotoPreview.innerHTML = `<img src="${this.getPhotoUrl(issue.resolutionPhotoPath)}" alt="Resolution photo" />`;
+        } else {
+            resolutionPhotoPreview.style.display = 'none';
+            resolutionPhotoPreview.innerHTML = '';
+        }
+    }
+
+    if (this.currentRole === 'admin') {
+        console.log('Showing admin controls');
+        
+        // Debug: Check if departments are loaded
+        console.log('Departments available:', this.departments);
+        
+        // Admin view
+        if (adminControls) {
+            adminControls.style.display = 'block';
+            console.log('Admin controls should now be visible');
+        }
+
+        const recommended = this.getDepartmentForCategory(issue.category) || 'General Services';
+        if (recChip) recChip.textContent = `Recommended: ${recommended}`;
+
+        if (deptSelect) {
+            // Ensure departments array exists and has data
+            if (!this.departments || this.departments.length === 0) {
+                console.warn('No departments loaded, loading sample data');
+                this.loadSampleData(); // Reload sample data if needed
+            }
+            
+            const names = this.departments.map(d => d.name);
+            const ordered = [recommended, ...names.filter(n => n !== recommended)];
+            
+            console.log('Populating dropdown with:', ordered);
+            deptSelect.innerHTML = ordered.map(name => 
+                `<option value="${name}">${name}</option>`
+            ).join('');
+            deptSelect.value = issue.assignedTo || recommended;
+        }
+
+        if (statusSelect) {
+            statusSelect.value = issue.status || 'submitted';
+        }
+
+        // Store reference to elements for cleanup
+        this.currentModalElements = {
+            resolutionPhotoGroup,
+            statusSelect
+        };
+
+        // Use the class method instead of local function
+        if (statusSelect) {
+            statusSelect.addEventListener('change', this.togglePhotoInput.bind(this));
+            this.togglePhotoInput(); // Call initially
+        }
+
+        if (fileInput) fileInput.value = '';
+
+        // Fix: Use correct button ID - saveAssignmentBtn instead of saveAssignBtn
+        const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
+        if (saveAssignmentBtn) {
+            saveAssignmentBtn.onclick = async () => {
+                const dept = deptSelect?.value;
+                if (!dept) return;
+
+                saveAssignmentBtn.disabled = true;
+                saveAssignmentBtn.textContent = 'Saving...';
+
+                try {
+                    const res = await this.makeAuthenticatedRequest(`${backendUrl}/api/issues/${issue.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ assignedTo: dept })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.error || 'Failed to assign department');
+                    }
+
+                    this.showNotification(`Assigned to ${dept}`, 'success');
+                    await this.loadIssuesFromAPI();
+                } catch (e) {
+                    this.showNotification(e.message || 'Assignment failed', 'error');
+                } finally {
+                    saveAssignmentBtn.disabled = false;
+                    saveAssignmentBtn.textContent = 'Save Assignment';
+                }
+            };
+        }
+
+        const saveStatusBtn = document.getElementById('saveStatusBtn');
+        if (saveStatusBtn) {
+            saveStatusBtn.onclick = async () => {
+                const newStatus = statusSelect?.value;
+                const file = fileInput?.files?.[0];
+
+                saveStatusBtn.disabled = true;
+                saveStatusBtn.textContent = 'Updating...';
+
+                try {
+                    let response;
+                    if (file || newStatus === 'resolved') {
+                        const fd = new FormData();
+                        if (newStatus) fd.append('status', newStatus);
+                        if (file) fd.append('resolutionPhoto', file);
+
+                        response = await fetch(`${backendUrl}/api/issues/${issue.id}`, {
+                            method: 'PATCH',
+                            headers: { Authorization: `Bearer ${this.accessToken}` },
+                            body: fd,
+                            credentials: 'include'
+                        });
+                    } else {
+                        response = await this.makeAuthenticatedRequest(`${backendUrl}/api/issues/${issue.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                    }
+
+                    if (!response.ok) {
+                        const err = await response.json().catch(() => ({}));
+                        throw new Error(err.error || 'Failed to update status');
+                    }
+
+                    this.showNotification('Status updated', 'success');
+                    await this.loadIssuesFromAPI();
+                    this.showIssueModal(issueId);
+                } catch (e) {
+                    this.showNotification(e.message || 'Update failed', 'error');
+                } finally {
+                    saveStatusBtn.disabled = false;
+                    saveStatusBtn.textContent = 'Update Status';
+                }
+            };
+        }
+    } else {
+        if (adminControls) adminControls.style.display = 'none';
+    }
+
     if (modal) {
         modal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+    } else {
+        console.error('Modal element not found');
+    }
+}
+togglePhotoInput() {
+    if (this.currentModalElements && this.currentModalElements.resolutionPhotoGroup && this.currentModalElements.statusSelect) {
+        const { resolutionPhotoGroup, statusSelect } = this.currentModalElements;
+        resolutionPhotoGroup.style.display = statusSelect.value === 'resolved' ? 'block' : 'none';
     }
 }
 
-    closeModal() {
-        const modal = document.getElementById('issueModal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+
+
+
+
+closeModal() {
+    const modal = document.getElementById('issueModal');
+    const statusSelect = document.getElementById('statusSelect');
+    
+    if (statusSelect && this.togglePhotoInput) {
+        statusSelect.removeEventListener('change', this.togglePhotoInput.bind(this));
     }
+    
+
+    this.currentModalElements = null;
+
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+    }
+}
+
 
     toggleUpvote(issueId, buttonElement) {
         const issue = this.issues.find(i => i.id === issueId);
@@ -1628,14 +1820,21 @@ setTheme(theme) {
         return statusMap[status] || status;
     }
 
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        });
-    }
+ formatDate(dateString) {
+    if (!dateString) return 'Not available';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Not available';
+    
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 
     getStatusProgress(status) {
         const progressMap = {

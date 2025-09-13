@@ -471,8 +471,9 @@ pre code {
 
 /* Form elements */
 .form-control {
-  display: block;
+  display: block !important;
   width: 100%;
+  margin-bottom: 1rem;
   padding: var(--space-8) var(--space-12);
   font-size: var(--font-size-md);
   line-height: 1.5;
@@ -1830,4 +1831,281 @@ body.modal-open { overflow: hidden; }
 .logout-btn:hover {
   background: #c82333;
 }
+.recommended-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  background: rgba(var(--color-teal-500-rgb), 0.12);
+  color: var(--color-primary);
+}
+.issue-photo-container,
+.resolution-photo-container {
+  margin-bottom: var(--space-16);
+  text-align: center;
+}
 
+.issue-photo-container img,
+.resolution-photo-container img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.resolution-photo-container::before {
+  content: "Resolution Photo:";
+  display: block;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-8);
+  color: var(--color-text-secondary);
+}
+
+.form-group {
+  margin-bottom: var(--space-16);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-4);
+  font-weight: var(--font-weight-medium);
+}
+.issue-details {
+    margin: var(--space-16) 0;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: var(--space-12);
+    padding: var(--space-8);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row.description {
+    flex-direction: column;
+}
+
+.detail-label {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    min-width: 120px;
+    margin-right: var(--space-12);
+}
+
+.detail-value {
+    color: var(--color-text);
+    flex: 1;
+}
+
+.status-submitted { color: var(--color-warning); }
+.status-assigned { color: var(--color-info); }
+.status-in-progress { color: var(--color-primary); }
+.status-resolved { color: var(--color-success); }
+/* Simple Issue Details Styling */
+/* Issue Details with Perfect Colon Alignment */
+.issue-details-simple {
+    padding: var(--space-16);
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: var(--space-16);
+    padding-bottom: var(--space-12);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.detail-row.description-row {
+    flex-direction: column;
+}
+
+.detail-row .label {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.description-row .label {
+    width: auto;
+    margin-bottom: var(--space-8);
+}
+
+.detail-row .value {
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    flex: 1;
+}
+
+.description-box {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-base);
+    padding: var(--space-12);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    margin-top: var(--space-4);
+}
+
+
+/* Clean Badge Styling */
+.badge {
+    display: inline-block;
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-base);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: capitalize;
+}
+
+/* Category Badge */
+.badge.category {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+/* Priority Badges */
+.badge.priority.low {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+}
+
+.badge.priority.medium {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.badge.priority.high {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.badge.priority.urgent {
+    background-color: #c62828;
+    color: white;
+}
+
+/* Status Badges */
+.badge.status.submitted {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.badge.status.assigned {
+    background-color: #e0f2f1;
+    color: #00695c;
+}
+
+.badge.status.in-progress {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge.status.resolved {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .description-box {
+        background-color: var(--color-charcoal-800);
+    }
+    
+    .badge.category {
+        background-color: rgba(25, 118, 210, 0.2);
+        color: #90caf9;
+    }
+    
+    .badge.priority.low {
+        background-color: rgba(46, 125, 50, 0.2);
+        color: #a5d6a7;
+    }
+    
+    .badge.priority.medium {
+        background-color: rgba(245, 124, 0, 0.2);
+        color: #ffb74d;
+    }
+    
+    .badge.priority.high {
+        background-color: rgba(198, 40, 40, 0.2);
+        color: #ef5350;
+    }
+    
+    .badge.status.submitted {
+        background-color: rgba(245, 124, 0, 0.2);
+        color: #ffb74d;
+    }
+    
+    .badge.status.assigned {
+        background-color: rgba(0, 105, 92, 0.2);
+        color: #4db6ac;
+    }
+    
+    .badge.status.in-progress {
+        background-color: rgba(25, 118, 210, 0.2);
+        color: #90caf9;
+    }
+    
+    .badge.status.resolved {
+        background-color: rgba(46, 125, 50, 0.2);
+        color: #a5d6a7;
+    }
+}
+
+[data-color-scheme="dark"] .description-box {
+    background-color: var(--color-charcoal-800);
+}
+
+[data-color-scheme="dark"] .badge.category {
+    background-color: rgba(25, 118, 210, 0.2);
+    color: #90caf9;
+}
+
+[data-color-scheme="dark"] .badge.priority.low {
+    background-color: rgba(46, 125, 50, 0.2);
+    color: #a5d6a7;
+}
+
+[data-color-scheme="dark"] .badge.priority.medium {
+    background-color: rgba(245, 124, 0, 0.2);
+    color: #ffb74d;
+}
+
+[data-color-scheme="dark"] .badge.priority.high {
+    background-color: rgba(198, 40, 40, 0.2);
+    color: #ef5350;
+}
+
+[data-color-scheme="dark"] .badge.status.submitted {
+    background-color: rgba(245, 124, 0, 0.2);
+    color: #ffb74d;
+}
+
+[data-color-scheme="dark"] .badge.status.assigned {
+    background-color: rgba(0, 105, 92, 0.2);
+    color: #4db6ac;
+}
+
+[data-color-scheme="dark"] .badge.status.in-progress {
+    background-color: rgba(25, 118, 210, 0.2);
+    color: #90caf9;
+}
+
+[data-color-scheme="dark"] .badge.status.resolved {
+    background-color: rgba(46, 125, 50, 0.2);
+    color: #a5d6a7;
+}

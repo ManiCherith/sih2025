@@ -68,3 +68,5 @@ The column `User.updatedAt` does not exist in the current database.
     at deserialize (/home/mithu/sih2025/node_modules/@phc/format/index.js:193:14)
     at Object.verify (/home/mithu/sih2025/node_modules/argon2/argon2.cjs:166:27)
     at /home/mithu/sih2025/server.js:131:32
+2025-09-13T05:16:55.078Z error: Update issue error
+2025-09-13T05:17:02.677Z error: Update issue error

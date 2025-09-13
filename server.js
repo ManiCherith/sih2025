@@ -9,10 +9,12 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet'); 
 const cors = require('cors');
 const corsOptions = {
-  origin: 'http://localhost:8080',
-  credentials: true, 
+  origin: 'http://localhost:8080',      
+  credentials: true,
+  methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
+
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
@@ -54,7 +56,10 @@ const app = express();
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-})); app.use(express.json());app.use(cookieParser());
+})); 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -236,15 +241,12 @@ app.get('/api/issues', authMiddleware, async (req, res) => {
       whereClause = { userId: req.user.id };
     }
     
-    const issues = await prisma.issue.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: { email: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+const issues = await prisma.issue.findMany({
+  where: whereClause,
+  include: { user: { select: { email: true } } },
+  orderBy: { createdAt: 'desc' }
+});
+
     
     logger.info(`User ${req.user.id} (${req.user.role}) fetched ${issues.length} issues`);
     
@@ -282,7 +284,8 @@ app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res)
       coordinates: coordinates || null,
       userId: req.user.id,
       submittedBy: user?.email || 'Unknown User',  
-      photoPath: req.file ? "/uploads/" + req.file.filename : null
+      photoPath: req.file ? "/uploads/" + req.file.filename : null ,
+      status: 'submitted'
     };
 
     const issue = await prisma.issue.create({ data: issueData });
@@ -295,39 +298,39 @@ app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res)
 
 
 
-app.patch('/api/issues/:id', authMiddleware, async (req, res) => {
+app.patch('/api/issues/:id', authMiddleware, upload.single('resolutionPhoto'), async (req, res) => {
   try {
     const parsed = UpdateIssueSchema.safeParse(req.body);
-    console.log('UpdateIssue PATCH request body:', req.body);
-   console.log('Parsed update data:', parsed.data);
+    console.log('UpdateIssue PATCH request body', req.body);
+    console.log('Parsed update data', parsed.data);
 
-    if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid update data' });
-    }
+    if (!parsed.success) return res.status(400).json({ error: 'Invalid update data' });
 
     if (req.user.role !== 'admin' && parsed.data.status) {
       return res.status(403).json({ error: 'Admin access required for status updates' });
     }
 
+    const updateData = { ...parsed.data };
+
+    if (req.file) {
+      updateData.resolutionPhotoPath = "/uploads/" + req.file.filename;
+      console.log('Uploaded file:', req.file);
+    }
+
     const issue = await prisma.issue.update({
       where: { id: req.params.id },
-      data: parsed.data,
-      include: {
-        user: {
-          select: { email: true }
-        }
-      }
+      data: updateData,
+      include: { user: { select: { email: true } } }
     });
 
     return res.json(issue);
   } catch (e) {
-    if (e.code === 'P2025') {
-      return res.status(404).json({ error: 'Issue not found' });
-    }
-    logger.error(`Update issue error: ${e.stack || e}`);
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Issue not found' });
+    logger.error('Update issue error', e.stack || e);
     return res.status(500).json({ error: 'Failed to update issue' });
   }
 });
+
 
 app.get('/api/issues/:id', authMiddleware, async (req, res) => {
   try {
