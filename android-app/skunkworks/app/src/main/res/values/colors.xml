@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors (Teal) -->
+    <color name="primary">#21808D</color>
+    <color name="primary_variant">#1D747F</color>
+    <color name="primary_light">#32B8C6</color>
+    <color name="primary_dark">#1A686F</color>
+
+    <!-- Secondary Colors (Brown) -->
+    <color name="secondary">#5E5240</color>
+    <color name="secondary_variant">#4A4133</color>
+    <color name="secondary_light">#77695A</color>
+
+    <!-- Background Colors -->
+    <color name="background">#FCFCF9</color>
+    <color name="surface">#FFFFFD</color>
+    <color name="surface_variant">#F5F5F5</color>
+
+    <!-- Text Colors -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_background">#133452</color>
+    <color name="on_surface">#133452</color>
+    <color name="on_surface_variant">#626C71</color>
+
+    <!-- Status Colors -->
+    <color name="success">#21808D</color>
+    <color name="success_light">#32B8C6</color>
+    <color name="error">#C0152F</color>
+    <color name="error_light">#FF5459</color>
+    <color name="warning">#A84B2F</color>
+    <color name="warning_light">#E68161</color>
+    <color name="info">#626C71</color>
+
+    <!-- Issue Priority Colors -->
+    <color name="priority_low">#22C55E</color>
+    <color name="priority_medium">#F59E0B</color>
+    <color name="priority_high">#EF4444</color>
+    <color name="priority_urgent">#DC2626</color>
+
+    <!-- Issue Status Colors -->
+    <color name="status_submitted">#F59E0B</color>
+    <color name="status_assigned">#00695C</color>
+    <color name="status_in_progress">#1976D2</color>
+    <color name="status_resolved">#2E7D32</color>
+
+    <!-- Issue Category Colors -->
+    <color name="category_potholes">#3B82F6</color>
+    <color name="category_streetlights">#F59E0B</color>
+    <color name="category_garbage">#22C55E</color>
+    <color name="category_drainage">#EF4444</color>
+    <color name="category_traffic">#9333EA</color>
+    <color name="category_vandalism">#F97316</color>
+    <color name="category_noise">#EC4899</color>
+    <color name="category_parks">#06B6D4</color>
+
+    <!-- Common Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Card and Border Colors -->
+    <color name="card_background">@color/surface</color>
+    <color name="card_border">#1F5E5240</color>
+    <color name="divider">#1F5E5240</color>
+</resources>
