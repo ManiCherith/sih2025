@@ -11,6 +11,8 @@ class SkunkWorks{
         this.currentLanguage = 'en';
         this.theme = 'light';
         this.accessToken = localStorage.getItem('civicconnect_token') || null;
+        this.currentModalElements = null;
+        this.statusChangeHandler = null;
         this.init();
             this.mapFilters = {
         category: '',
@@ -114,17 +116,19 @@ if (selectedPriority && selectedPriority !== 'all') {
         const markerIcon = this.createColoredMarkerIcon(markerColor);
         
         const marker = L.marker([lat, lng], { icon: markerIcon })
-            .bindPopup(`
-                <div class="map-popup">
-                    <h4>${issue.title}</h4>
-                    <p><strong>Category:</strong> ${issue.category}</p>
-                    <p><strong>Location:</strong> ${issue.location}</p>
-                    <p><strong>Status:</strong> <span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></p>
-                    <p><strong>Priority:</strong> ${issue.priority}</p>
-                    <p>${issue.description}</p>
-                    ${this.getPopupImage(issue)}
-                </div>
-            `);
+.bindPopup(`
+  <div class="map-popup">
+    <h4>${issue.title}</h4>
+    <p><strong>Category:</strong> ${issue.category}</p>
+    <p><strong>Location:</strong> ${issue.location}</p>
+    <p><strong>Status:</strong> <span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></p>
+    <p><strong>Priority:</strong> ${issue.priority}</p>
+    <p><strong>Upvotes:</strong> ${Number.isFinite(issue.upvotes) ? issue.upvotes : 0}</p>  <!-- NEW -->
+    <p>${issue.description}</p>
+    ${this.getPopupImage(issue) || ''}
+  </div>
+`)
+;
 
         this._issueMarkersLayer.addLayer(marker);
         markersArray.push(marker);
@@ -499,13 +503,6 @@ if (logoutBtnAdmin) {
                 if (issueId) {
                     this.showIssueModal(issueId);
                 }
-                return;
-            }
-
-            if (e.target.classList.contains('upvote-btn')) {
-                e.stopPropagation();
-                const issueId = e.target.dataset.issueId;
-                this.toggleUpvote(issueId, e.target);
                 return;
             }
         });
@@ -1016,6 +1013,31 @@ async makeAuthenticatedRequest(url, options = {}) {
   
   return response;
 }
+async authedFetch(url, options = {}) {
+  const doFetch = async () =>
+    fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${this.accessToken}`,
+      },
+      credentials: 'include',
+    });
+
+  let res = await doFetch();
+  if (res.status === 401) {
+    const refreshed = await this.refreshAccessToken?.();
+    if (refreshed) {
+      res = await doFetch();
+    } else {
+      this.showLandingPage?.();
+      this.showNotification?.('Session expired. Please log in again.', 'error');
+      throw new Error('Unauthorized');
+    }
+  }
+  return res;
+}
+
 
 async loadIssuesFromAPI() {
   try {
@@ -1493,47 +1515,90 @@ async handleIssueSubmission(e) {
     }
   }
 
+  const checkData = {
+    category: categoryEl.value,
+    title: titleEl.value,
+    description: descriptionEl.value,
+    coordinates,
+  };
+
+  try {
+    const checkResp = await this.authedFetch(`${backendUrl}/api/issues/check-duplicates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(checkData),
+    });
+
+    if (checkResp.ok) {
+      const { similarIssues } = await checkResp.json();
+      if (Array.isArray(similarIssues) && similarIssues.length > 0) {
+        this.showDuplicateModal(similarIssues, () => this.submitIssue());
+        return;
+      }
+    } else {
+      console.error('Duplicate check failed');
+    }
+  } catch (error) {
+    console.error('Error checking duplicates:', error);
+    // Proceed anyway if duplicate check fails
+  }
+
+  await this.submitIssue();
+}
+
+// Replace your submitIssue with this version
+async submitIssue() {
+  const titleEl = document.getElementById('issueTitle');
+  const categoryEl = document.getElementById('issueCategory');
+  const descriptionEl = document.getElementById('issueDescription');
+  const locationEl = document.getElementById('issueLocation');
+  const priorityEl = document.getElementById('issuePriority');
+  const photoInput = document.getElementById('issuePhoto');
+
+  let coordinates = null;
+  let locValue = locationEl.value.trim();
+  if (locValue.startsWith('"') && locValue.endsWith('"')) {
+    locValue = locValue.slice(1, -1);
+  }
+  if (locValue.includes(',')) {
+    const parts = locValue.split(',').map(s => parseFloat(s.trim()));
+    if (parts.length === 2 && parts.every(n => !isNaN(n))) {
+      coordinates = parts;
+    }
+  }
+
   const formData = new FormData();
   formData.append('title', titleEl.value);
   formData.append('category', categoryEl.value);
   formData.append('description', descriptionEl.value);
   formData.append('location', locValue);
   formData.append('priority', priorityEl.value);
-  if (coordinates) {
-    formData.append('coordinates', JSON.stringify(coordinates));
-  }
-  if (photoInput && photoInput.files.length > 0) {
-    formData.append('photo', photoInput.files[0]);  // UPDATED: Append the first file from the FileList (for single upload)
-  }
-  
+  if (coordinates) formData.append('coordinates', JSON.stringify(coordinates));
+  if (photoInput && photoInput.files.length > 0) formData.append('photo', photoInput.files);
+
   try {
-    const response = await fetch('http://localhost:3443/api/issues', {
+    const response = await this.authedFetch(`${backendUrl}/api/issues`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.accessToken}`
-      },
-      body: formData,
-      credentials: 'include'
+      body: formData, // do not set Content-Type; browser will set multipart/form-data boundary
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to submit issue');
+      throw new Error(errorData.error || 'Failed to submit');
     }
 
     const newIssue = await response.json();
     this.issues.unshift(newIssue);
     this.userReports.unshift(newIssue);
     this.showNotification('Issue reported successfully!', 'success');
-    e.target.reset();
-    this.currentCoordinates = null;
 
-    // NEW: Clear the photo preview (add this after reset to handle any rendered <img> or content in the preview div)
+    const form = document.getElementById('issueForm');
+    if (form) form.reset();
+
     const photoPreview = document.getElementById('photoPreview');
-    if (photoPreview) {
-      photoPreview.innerHTML = '';
-    }
+    if (photoPreview) photoPreview.innerHTML = '';
 
+    this.currentCoordinates = null;
     await this.loadIssuesFromAPI();
     if (this.currentRole === 'admin' && this.currentTab === 'admin-map') {
       this.loadAdminMap();
@@ -1542,6 +1607,11 @@ async handleIssueSubmission(e) {
     this.showNotification(error.message, 'error');
   }
 }
+
+
+
+
+
 
 
     handlePhotoUpload(e) {
@@ -1586,6 +1656,92 @@ async handleIssueSubmission(e) {
     }
   );
 }
+showDuplicateModal(similarIssues, proceedCallback) {
+  const modal = document.createElement('div');
+  modal.className = 'modal duplicate-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Similar Issues Found</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>We found ${similarIssues.length} similar issue(s) in your area. Would you like to upvote an existing issue instead?</p>
+        <div class="similar-issues-list">
+          ${similarIssues.map(issue => `
+            <div class="similar-issue-item" data-issue-id="${issue.id}">
+              <div class="issue-details">
+                <h4>${issue.title}</h4>
+                <p><strong>Location:</strong> ${issue.location}</p>
+                <p><strong>Status:</strong> ${this.formatStatus(issue.status)}</p>
+                <p><strong>Upvotes:</strong> ${issue.upvotes}</p>
+                <p class="issue-description">${issue.description.substring(0, 100)}...</p>
+              </div>
+              <button class="btn btn--primary upvote-similar-btn" data-issue-id="${issue.id}">
+                Upvote This Issue
+              </button>
+            </div>
+          `).join('')}
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn--outline proceed-anyway-btn">Report New Issue Anyway</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  
+  // Event listeners
+  modal.querySelector('.modal-close').addEventListener('click', () => {
+    this.closeDuplicateModal(modal);
+  });
+  
+  modal.querySelector('.proceed-anyway-btn').addEventListener('click', () => {
+    this.closeDuplicateModal(modal);
+    proceedCallback();
+  });
+  
+  modal.querySelectorAll('.upvote-similar-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const issueId = e.target.dataset.issueId;
+      await this.upvoteIssue(issueId);
+      this.closeDuplicateModal(modal);
+      this.showNotification('Thank you for upvoting the existing issue!', 'success');
+      // Clear and reset form
+      document.getElementById('issueReportForm').reset();
+    });
+  });
+}
+
+closeDuplicateModal(modal) {
+  modal.remove();
+  document.body.classList.remove('modal-open');
+}
+
+async upvoteIssue(issueId) {
+  try {
+    const response = await this.makeAuthenticatedRequest(
+      `${backendUrl}/api/issues/${issueId}/upvote`,
+      { method: 'POST' }
+    );
+    
+    if (response.ok) {
+      await this.loadIssuesFromAPI(); // Refresh issues
+      return true;
+    } else {
+      const error = await response.json();
+      this.showNotification(error.error || 'Failed to upvote', 'error');
+      return false;
+    }
+  } catch (error) {
+    this.showNotification('Failed to upvote issue', 'error');
+    return false;
+  }
+}
+
 
 
     loadUserReports(statusFilter = '') {
@@ -1637,6 +1793,7 @@ async handleIssueSubmission(e) {
             </div>
         `).join('');
     }
+
 loadAdminMap() {
     setTimeout(() => {
         if (!this._adminMap) {
@@ -1795,37 +1952,39 @@ loadAdminMap() {
     if (!container) return;
     
     const filteredIssues = this.getFilteredAdminIssues();
-
-    container.innerHTML = `
-        <div class="table-header">
-            <div>Issue Details</div>
-            <div>Category</div>
-            <div>Priority</div>
-            <div>Status</div>
-            <div>Date</div>
-            <div>Assigned To</div>
-            <div>Photo</div> <!-- Add column header -->
+container.innerHTML = `
+  <div class="table-header">
+    <div>Issue Details</div>
+    <div>Category</div>
+    <div>Priority</div>
+    <div>Status</div>
+    <div>Date</div>
+    <div>Assigned To</div>
+    <div>Upvotes</div>    <!-- NEW -->
+    <div>Photo</div>
+  </div>
+  ${filteredIssues.map(issue => {
+    const photoUrl = this.getPhotoUrl(issue.photoPath);
+    return `
+      <div class="table-row" data-issue-id="${issue.id}">
+        <div class="issue-summary">
+          <div class="issue-title-small">${issue.title}</div>
+          <div class="issue-description-small">${issue.description}</div>
         </div>
-        ${filteredIssues.map(issue => {
-            const photoUrl = this.getPhotoUrl(issue.photoPath);
-            return `
-            <div class="table-row" data-issue-id="${issue.id}">
-                <div class="issue-summary">
-                    <div class="issue-title-small">${issue.title}</div>
-                    <div class="issue-description-small">${issue.description}</div>
-                </div>
-                <div><span class="category-badge ${issue.category}">${issue.category}</span></div>
-                <div><span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
-                <div><span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
-                <div>${this.formatDate(issue.submittedDate)}</div>
-                <div>${issue.assignedTo || 'Unassigned'}</div>
-                <div>
-                    ${photoUrl ? '<img src="${photoUrl}" alt="Issue Photo" style="max-width:100px; max-height:80px; border-radius:4px;" />' : 'No Photo'}
-                </div>
-            </div>
-            `;
-        }).join('')}
+        <div><span class="category-badge ${issue.category}">${issue.category}</span></div>
+        <div><span class="priority-badge ${issue.priority}">${issue.priority}</span></div>
+        <div><span class="status status--${issue.status}">${this.formatStatus(issue.status)}</span></div>
+        <div>${this.formatDate(issue.submittedDate)}</div>
+        <div>${issue.assignedTo || 'Unassigned'}</div>
+        <div>${Number.isFinite(issue.upvotes) ? issue.upvotes : 0}</div> <!-- NEW -->
+        <div>${photoUrl ? `<img src="${photoUrl}" alt="Issue Photo" style="max-width:100px; max-height:80px; border-radius:4px" />` : 'No Photo'}</div>
+      </div>
     `;
+  }).join('')}
+`;
+
+
+
 }
 
 
@@ -2001,272 +2160,238 @@ convertArrayToObject(arr, keyField, countField) {
     }
 
 showIssueModal(issueId) {
-    const issue = this.issues.find(i => i.id === issueId);
-    if (!issue) {
-        console.error('Issue not found:', issueId);
-        return;
-    }
-    
-    console.log('Current role:', this.currentRole);
-    console.log('Issue found:', issue);
+  // Defensive: ensure any previous modal instance is fully cleaned up (idempotent)
+  if (this.currentModalElements) this.closeModal();
 
-    const modal = document.getElementById('issueModal');
-    const modalTitle = document.getElementById('modalIssueTitle');
-    const modalInfo = document.getElementById('modalIssueInfo');
-    const issuePhotoPreview = document.getElementById('issuePhotoPreview');
-    const resolutionPhotoPreview = document.getElementById('resolutionPhotoPreview');
-    const adminControls = document.getElementById('adminControls');
-    const deptSelect = document.getElementById('departmentSelect');
-    const statusSelect = document.getElementById('statusSelect');
-    const recChip = document.getElementById('recommendedChip');
-    const resolutionPhotoGroup = document.getElementById('resolutionPhotoGroup');
-    const fileInput = document.getElementById('resolutionPhotoInput');
+  // Find the issue
+  const issue = this.issues.find(i => i.id === issueId);
+  if (!issue) {
+    console.error('Issue not found:', issueId);
+    return;
+  }
 
-    console.log('Admin controls element found:', !!adminControls);
+  console.log('Current role:', this.currentRole);
+  console.log('Issue found:', issue);
 
-    if (modalTitle) modalTitle.textContent = issue.title;
-    
-if (modalInfo) {
+  const modal = document.getElementById('issueModal');
+  const modalTitle = document.getElementById('modalIssueTitle');
+  const modalInfo = document.getElementById('modalIssueInfo');
+  const issuePhotoPreview = document.getElementById('issuePhotoPreview');
+  const resolutionPhotoPreview = document.getElementById('resolutionPhotoPreview');
+
+  // Admin controls
+  const adminControls = document.getElementById('adminControls');
+  const deptSelect = document.getElementById('departmentSelect');
+  const statusSelect = document.getElementById('statusSelect');
+  const recChip = document.getElementById('recommendedChip');
+  const resolutionPhotoGroup = document.getElementById('resolutionPhotoGroup');
+  const fileInput = document.getElementById('resolutionPhotoInput');
+
+  if (!modal) {
+    console.error('Modal element not found');
+    return;
+  }
+
+  if (modalTitle) modalTitle.textContent = issue.title;
+
+  if (modalInfo) {
     modalInfo.innerHTML = `
-        <div class="issue-details-simple">
-            <div class="detail-row">
-                <span class="label">Category:</span>
-                <span class="badge category">${issue.category || 'N/A'}</span>
-            </div>
-            <div class="detail-row">
-                <span class="label">Priority:</span>
-                <span class="badge priority ${(issue.priority || '').toLowerCase()}">${issue.priority || 'N/A'}</span>
-            </div>
-            <div class="detail-row">
-                <span class="label">Status:</span>
-                <span class="badge status ${issue.status}">${this.formatStatus(issue.status)}</span>
-            </div>
-            <div class="detail-row">
-                <span class="label">Location:</span>
-                <span class="value">${issue.location || 'N/A'}</span>
-            </div>
-            <div class="detail-row">
-                <span class="label">Submitted:</span>
-                <span class="value">${this.formatDate(issue.createdAt || issue.submittedDate)}</span>
-            </div>
-            <div class="detail-row">
-                <span class="label">Assigned To:</span>
-                <span class="value">${issue.assignedTo || 'Not assigned'}</span>
-            </div>
-            <div class="detail-row description-row">
-                <span class="label">Description:</span>
-                <div class="description-box">${issue.description || 'N/A'}</div>
-            </div>
-        </div>
+      <div class="issue-details-simple">
+        <div class="detail-row"><span class="label">Category</span><span class="badge category ${issue.category}">${issue.category || 'NA'}</span></div>
+        <div class="detail-row"><span class="label">Priority</span><span class="badge priority ${issue.priority?.toLowerCase()}">${issue.priority || 'NA'}</span></div>
+        <div class="detail-row"><span class="label">Status</span><span class="badge status ${issue.status}">${this.formatStatus(issue.status)}</span></div>
+        <div class="detail-row"><span class="label">Location</span><span class="value">${issue.location || 'NA'}</span></div>
+        <div class="detail-row"><span class="label">Submitted</span><span class="value">${this.formatDate(issue.createdAt || issue.submittedDate)}</span></div>
+        <div class="detail-row"><span class="label">Assigned To</span><span class="value">${issue.assignedTo || 'Not assigned'}</span></div>
+        <div class="detail-row"><span class="label">Upvotes</span><span class="value">${Number.isFinite(issue.upvotes) ? issue.upvotes : 0}</span></div>
+        <div class="detail-row description-row"><span class="label">Description</span><div class="description-box">${issue.description || 'NA'}</div></div>
+      </div>
     `;
+  }
+
+  // Show issue photo (visible for both roles)
+  if (issuePhotoPreview) {
+    issuePhotoPreview.innerHTML = issue.photoPath
+      ? `<img src="${this.getPhotoUrl(issue.photoPath)}" alt="Issue photo" />`
+      : '';
+  }
+
+  // Resolution photo (visible for both roles)
+  if (resolutionPhotoPreview) {
+    if (issue.status === 'resolved' && issue.resolutionPhotoPath) {
+      resolutionPhotoPreview.style.display = 'block';
+      resolutionPhotoPreview.innerHTML = `<img src="${this.getPhotoUrl(issue.resolutionPhotoPath)}" alt="Resolution photo" />`;
+    } else {
+      resolutionPhotoPreview.style.display = 'none';
+      resolutionPhotoPreview.innerHTML = '';
+    }
+  }
+
+  if (this.currentRole === 'admin') {
+    // Show admin controls
+    if (adminControls) adminControls.style.display = 'block';
+
+    // Recommended department based on category
+    const recommended = this.getDepartmentForCategory(issue.category) || 'General Services';
+    if (recChip) recChip.textContent = `Recommended: ${recommended}`;
+
+    // Populate department dropdown
+    if (deptSelect) {
+      if (!this.departments || this.departments.length === 0) {
+        console.warn('No departments loaded, loading sample data');
+        this.loadSampleData();
+      }
+      const names = this.departments.map(d => d.name);
+      const ordered = [recommended, ...names.filter(n => n !== recommended)];
+      deptSelect.innerHTML = ordered.map(name => `<option value="${name}">${name}</option>`).join('');
+      deptSelect.value = issue.assignedTo || recommended;
+    }
+
+    // Set current status
+    if (statusSelect) {
+      statusSelect.value = issue.status || 'submitted';
+    }
+
+    // Store refs and attach a stable change handler (idempotent)
+    this.currentModalElements = { statusSelect, resolutionPhotoGroup };
+
+    if (statusSelect && !this.statusChangeHandler) {
+      this.statusChangeHandler = this.togglePhotoInput.bind(this);
+    }
+    if (statusSelect) {
+      statusSelect.addEventListener('change', this.statusChangeHandler);
+      this.togglePhotoInput();
+    }
+
+    if (fileInput) fileInput.value = '';
+
+    // Save assignment button
+    const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
+    if (saveAssignmentBtn) {
+      saveAssignmentBtn.onclick = async () => {
+        const dept = deptSelect?.value;
+        if (!dept) return;
+        saveAssignmentBtn.disabled = true;
+        saveAssignmentBtn.textContent = 'Saving...';
+        try {
+          const res = await this.makeAuthenticatedRequest(`${backendUrl}/api/issues/${issue.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignedTo: dept })
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to assign department');
+          }
+          this.showNotification(`Assigned to ${dept}`, 'success');
+          await this.loadIssuesFromAPI();
+        } catch (e) {
+          this.showNotification(e.message || 'Assignment failed', 'error');
+        } finally {
+          saveAssignmentBtn.disabled = false;
+          saveAssignmentBtn.textContent = 'Save Assignment';
+        }
+      };
+    }
+
+    // Save status button
+    const saveStatusBtn = document.getElementById('saveStatusBtn');
+    if (saveStatusBtn) {
+      saveStatusBtn.onclick = async () => {
+        const newStatus = statusSelect?.value;
+        const file = fileInput?.files?.[0];
+
+        saveStatusBtn.disabled = true;
+        saveStatusBtn.textContent = 'Updating...';
+
+        try {
+          let response;
+          if (file || newStatus === 'resolved') {
+            const fd = new FormData();
+            if (newStatus) fd.append('status', newStatus);
+            if (file) fd.append('resolutionPhoto', file);
+            response = await fetch(`${backendUrl}/api/issues/${issue.id}`, {
+              method: 'PATCH',
+              headers: { Authorization: `Bearer ${this.accessToken}` },
+              body: fd,
+              credentials: 'include'
+            });
+          } else {
+            response = await this.makeAuthenticatedRequest(`${backendUrl}/api/issues/${issue.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus })
+            });
+          }
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to update status');
+          }
+
+          this.showNotification('Status updated', 'success');
+          await this.loadIssuesFromAPI();
+          this.closeModal();
+          this.showIssueModal(issueId);
+        } catch (e) {
+          this.showNotification(e.message || 'Update failed', 'error');
+        } finally {
+          saveStatusBtn.disabled = false;
+          saveStatusBtn.textContent = 'Update Status';
+        }
+      };
+    }
+  } else {
+    // Hide admin controls for citizen view
+    if (adminControls) adminControls.style.display = 'none';
+  }
+
+  // Finally open modal
+  modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
 }
 
-
-
-    // Show issue photo (visible for both roles)
-    if (issuePhotoPreview) {
-        issuePhotoPreview.innerHTML = issue.photoPath
-            ? `<img src="${this.getPhotoUrl(issue.photoPath)}" alt="Issue photo" />`
-            : '';
-    }
-
-    // Resolution photo (visible for both roles)
-    if (resolutionPhotoPreview) {
-        if (issue.status === 'resolved' && issue.resolutionPhotoPath) {
-            resolutionPhotoPreview.style.display = 'block';
-            resolutionPhotoPreview.innerHTML = `<img src="${this.getPhotoUrl(issue.resolutionPhotoPath)}" alt="Resolution photo" />`;
-        } else {
-            resolutionPhotoPreview.style.display = 'none';
-            resolutionPhotoPreview.innerHTML = '';
-        }
-    }
-
-    if (this.currentRole === 'admin') {
-        console.log('Showing admin controls');
-        
-        // Debug: Check if departments are loaded
-        console.log('Departments available:', this.departments);
-        
-        // Admin view
-        if (adminControls) {
-            adminControls.style.display = 'block';
-            console.log('Admin controls should now be visible');
-        }
-
-        const recommended = this.getDepartmentForCategory(issue.category) || 'General Services';
-        if (recChip) recChip.textContent = `Recommended: ${recommended}`;
-
-        if (deptSelect) {
-            // Ensure departments array exists and has data
-            if (!this.departments || this.departments.length === 0) {
-                console.warn('No departments loaded, loading sample data');
-                this.loadSampleData(); // Reload sample data if needed
-            }
-            
-            const names = this.departments.map(d => d.name);
-            const ordered = [recommended, ...names.filter(n => n !== recommended)];
-            
-            console.log('Populating dropdown with:', ordered);
-            deptSelect.innerHTML = ordered.map(name => 
-                `<option value="${name}">${name}</option>`
-            ).join('');
-            deptSelect.value = issue.assignedTo || recommended;
-        }
-
-        if (statusSelect) {
-            statusSelect.value = issue.status || 'submitted';
-        }
-
-        // Store reference to elements for cleanup
-        this.currentModalElements = {
-            resolutionPhotoGroup,
-            statusSelect
-        };
-
-        // Use the class method instead of local function
-        if (statusSelect) {
-            statusSelect.addEventListener('change', this.togglePhotoInput.bind(this));
-            this.togglePhotoInput(); // Call initially
-        }
-
-        if (fileInput) fileInput.value = '';
-
-        // Fix: Use correct button ID - saveAssignmentBtn instead of saveAssignBtn
-        const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
-        if (saveAssignmentBtn) {
-            saveAssignmentBtn.onclick = async () => {
-                const dept = deptSelect?.value;
-                if (!dept) return;
-
-                saveAssignmentBtn.disabled = true;
-                saveAssignmentBtn.textContent = 'Saving...';
-
-                try {
-                    const res = await this.makeAuthenticatedRequest(`${backendUrl}/api/issues/${issue.id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ assignedTo: dept })
-                    });
-
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.error || 'Failed to assign department');
-                    }
-
-                    this.showNotification(`Assigned to ${dept}`, 'success');
-                    await this.loadIssuesFromAPI();
-                } catch (e) {
-                    this.showNotification(e.message || 'Assignment failed', 'error');
-                } finally {
-                    saveAssignmentBtn.disabled = false;
-                    saveAssignmentBtn.textContent = 'Save Assignment';
-                }
-            };
-        }
-
-        const saveStatusBtn = document.getElementById('saveStatusBtn');
-        if (saveStatusBtn) {
-            saveStatusBtn.onclick = async () => {
-                const newStatus = statusSelect?.value;
-                const file = fileInput?.files?.[0];
-
-                saveStatusBtn.disabled = true;
-                saveStatusBtn.textContent = 'Updating...';
-
-                try {
-                    let response;
-                    if (file || newStatus === 'resolved') {
-                        const fd = new FormData();
-                        if (newStatus) fd.append('status', newStatus);
-                        if (file) fd.append('resolutionPhoto', file);
-
-                        response = await fetch(`${backendUrl}/api/issues/${issue.id}`, {
-                            method: 'PATCH',
-                            headers: { Authorization: `Bearer ${this.accessToken}` },
-                            body: fd,
-                            credentials: 'include'
-                        });
-                    } else {
-                        response = await this.makeAuthenticatedRequest(`${backendUrl}/api/issues/${issue.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: newStatus })
-                        });
-                    }
-
-                    if (!response.ok) {
-                        const err = await response.json().catch(() => ({}));
-                        throw new Error(err.error || 'Failed to update status');
-                    }
-
-                    this.showNotification('Status updated', 'success');
-                    await this.loadIssuesFromAPI();
-                    this.showIssueModal(issueId);
-                } catch (e) {
-                    this.showNotification(e.message || 'Update failed', 'error');
-                } finally {
-                    saveStatusBtn.disabled = false;
-                    saveStatusBtn.textContent = 'Update Status';
-                }
-            };
-        }
-    } else {
-        if (adminControls) adminControls.style.display = 'none';
-    }
-
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.classList.add('modal-open');
-    } else {
-        console.error('Modal element not found');
-    }
-}
 togglePhotoInput() {
-    if (this.currentModalElements && this.currentModalElements.resolutionPhotoGroup && this.currentModalElements.statusSelect) {
-        const { resolutionPhotoGroup, statusSelect } = this.currentModalElements;
-        resolutionPhotoGroup.style.display = statusSelect.value === 'resolved' ? 'block' : 'none';
-    }
+  const els = this.currentModalElements;
+  if (!els) return;
+
+  const { resolutionPhotoGroup, statusSelect } = els;
+  if (!resolutionPhotoGroup || !statusSelect) return;
+
+  const shouldShow = statusSelect.value === 'resolved';
+  resolutionPhotoGroup.style.display = shouldShow ? 'block' : 'none';
 }
 
-
-
-
-
+// Drop-in replacement
 closeModal() {
-    const modal = document.getElementById('issueModal');
-    const statusSelect = document.getElementById('statusSelect');
-    
-    if (statusSelect && this.togglePhotoInput) {
-        statusSelect.removeEventListener('change', this.togglePhotoInput.bind(this));
-    }
-    
+  const modal = document.getElementById('issueModal');
 
-    this.currentModalElements = null;
+  // Detach the exact same change handler reference, if any
+  const els = this.currentModalElements;
+  if (els?.statusSelect && this.statusChangeHandler) {
+    els.statusSelect.removeEventListener('change', this.statusChangeHandler);
+  }
 
-    if (modal) {
-        modal.classList.add('hidden');
-        document.body.classList.remove('modal-open');
-    }
+  // Also clear button handlers to avoid stale closures persisting across opens
+  const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
+  const saveStatusBtn = document.getElementById('saveStatusBtn');
+  if (saveAssignmentBtn) saveAssignmentBtn.onclick = null;
+  if (saveStatusBtn) saveStatusBtn.onclick = null;
+
+  // Clear stored refs
+  this.currentModalElements = null;
+
+  // Hide modal and restore body state
+  if (modal) modal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+
+  // Hard-clean any dynamically injected duplicate modals if they linger
+  document.querySelectorAll('.duplicate-modal').forEach(m => m.remove());
 }
 
 
-    toggleUpvote(issueId, buttonElement) {
-        const issue = this.issues.find(i => i.id === issueId);
-        if (!issue) return;
-        
-        const wasVoted = buttonElement.classList.contains('voted');
-        
-        if (wasVoted) {
-            issue.upvotes--;
-            buttonElement.classList.remove('voted');
-        } else {
-            issue.upvotes++;
-            buttonElement.classList.add('voted');
-        }
-        
-        buttonElement.innerHTML = `👍 ${issue.upvotes}`;
-        this.showNotification(wasVoted ? 'Vote removed' : 'Thanks for your vote!', 'info');
-    }
+
+
 
     filterUserReports(status) {
         this.loadUserReports(status);

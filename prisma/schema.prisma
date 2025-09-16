@@ -1,43 +1,55 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql" 
-  url      = env("DATABASE_URL")
-}
-
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   passwordHash String
-  role         String    @default("citizen")
-  createdAt    DateTime  @default(now())
+  role         String   @default("citizen")
+  createdAt    DateTime @default(now())
   issues       Issue[]
+  upvotes      Upvote[]
 }
 
 model Issue {
-  id                    String   @id @default(uuid()) 
-  title                 String
-  category              String
-  description           String
-  location              String
-  priority              String
-  coordinates           Json? 
-  userId                String
-  submittedBy           String
-  photoPath             String?
-  status                String   @default("submitted") 
-  assignedTo            String?  
-  resolutionPhotoPath   String? 
-  upvotes               Int      @default(0) 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt 
-  resolvedAt            DateTime?
+  id                 String    @id @default(uuid())
+  title              String
+  category           String
+  description        String
+  location           String
+  priority           String
+  coordinates        Json?
+  userId             String
+  submittedBy        String
+  photoPath          String?
+  status             String    @default("submitted")
+  assignedTo         String?
+  resolutionPhotoPath String?
+  upvotes            Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  resolvedAt         DateTime?
+  user               User      @relation(fields: [userId], references: [id])
+  votes              Upvote[]
+}
 
+model Upvote {
+  id        String   @id @default(cuid())
+  userId    String
+  issueId   String
+  createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, issueId])
 }

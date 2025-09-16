@@ -300,6 +300,114 @@ app.post('/api/issues', authMiddleware, upload.single('photo'), async (req, res)
     res.status(500).json({ error: 'Failed to create issue', details: e.message });
   }
 });
+app.post('/api/issues/check-duplicates', authMiddleware, async (req, res) => {
+  try {
+    const { category, coordinates, title, description } = req.body;
+    
+    const PROXIMITY_RADIUS = 0.005; 
+    
+    let similarIssues = [];
+    
+    if (coordinates && coordinates.length === 2) {
+      const [lat, lng] = coordinates;
+      
+      similarIssues = await prisma.issue.findMany({
+        where: {
+          category: category,
+          status: { not: 'resolved' },
+          coordinates: {
+            not: null
+          }
+        },
+        include: {
+          user: { select: { email: true } }
+        }
+      });
+      
+      similarIssues = similarIssues.filter(issue => {
+        if (!issue.coordinates || issue.coordinates.length !== 2) return false;
+        
+        const [issueLat, issueLng] = issue.coordinates;
+        const distance = calculateDistance(lat, lng, issueLat, issueLng);
+        return distance <= 0.5; 
+      });
+    }
+    
+    const textSimilar = await prisma.issue.findMany({
+      where: {
+        category: category,
+        status: { not: 'resolved' },
+        OR: [
+          { title: { contains: title.substring(0, 20), mode: 'insensitive' } },
+          { description: { contains: description.substring(0, 50), mode: 'insensitive' } }
+        ]
+      },
+      include: {
+        user: { select: { email: true } }
+      }
+    });
+    
+    const allSimilar = [...similarIssues, ...textSimilar].filter((issue, index, self) => 
+      index === self.findIndex(i => i.id === issue.id)
+    );
+    
+    return res.json({ similarIssues: allSimilar });
+    
+  } catch (e) {
+    console.error('Duplicate check error:', e);
+    return res.status(500).json({ error: 'Failed to check for duplicates' });
+  }
+});
+
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; 
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+           Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+           Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+app.post('/api/issues/:id/upvote', authMiddleware, async (req, res) => {
+  try {
+    const issueId = req.params.id;
+    const userId = req.user.id;
+    
+    // Check if user already upvoted
+    const existing = await prisma.upvote.findUnique({
+      where: {
+        userId_issueId: { userId, issueId }
+      }
+    });
+    
+    if (existing) {
+      return res.status(400).json({ error: 'Already upvoted' });
+    }
+    
+    // Create upvote and increment counter
+    await prisma.$transaction([
+      prisma.upvote.create({
+        data: { userId, issueId }
+      }),
+      prisma.issue.update({
+        where: { id: issueId },
+        data: { upvotes: { increment: 1 } }
+      })
+    ]);
+    
+    const updatedIssue = await prisma.issue.findUnique({
+      where: { id: issueId }
+    });
+    
+    return res.json({ upvotes: updatedIssue.upvotes });
+    
+  } catch (e) {
+    console.error('Upvote error:', e);
+    return res.status(500).json({ error: 'Failed to upvote' });
+  }
+});
+
 
 
 

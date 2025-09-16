@@ -2293,4 +2293,54 @@ body.modal-open { overflow: hidden; }
 /* Fine-tune button alignment with dropdowns */
 .map-tools .btn {
     margin-top: 8px;  /* Small adjustment to align with dropdowns */
+}.duplicate-modal .modal-content {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.similar-issues-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 20px 0;
+}
+
+.similar-issue-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f9f9f9;
+}
+
+.similar-issue-item:hover {
+  background: #f0f0f0;
+}
+
+.issue-details h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.issue-details p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.issue-description {
+  font-style: italic;
+  margin-top: 8px !important;
+}
+
+.upvote-similar-btn {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.modal-actions {
+  text-align: center;
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
 }
