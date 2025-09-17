@@ -2160,10 +2160,8 @@ convertArrayToObject(arr, keyField, countField) {
     }
 
 showIssueModal(issueId) {
-  // Defensive: ensure any previous modal instance is fully cleaned up (idempotent)
   if (this.currentModalElements) this.closeModal();
 
-  // Find the issue
   const issue = this.issues.find(i => i.id === issueId);
   if (!issue) {
     console.error('Issue not found:', issueId);
@@ -2178,8 +2176,6 @@ showIssueModal(issueId) {
   const modalInfo = document.getElementById('modalIssueInfo');
   const issuePhotoPreview = document.getElementById('issuePhotoPreview');
   const resolutionPhotoPreview = document.getElementById('resolutionPhotoPreview');
-
-  // Admin controls
   const adminControls = document.getElementById('adminControls');
   const deptSelect = document.getElementById('departmentSelect');
   const statusSelect = document.getElementById('statusSelect');
@@ -2209,14 +2205,12 @@ showIssueModal(issueId) {
     `;
   }
 
-  // Show issue photo (visible for both roles)
   if (issuePhotoPreview) {
     issuePhotoPreview.innerHTML = issue.photoPath
       ? `<img src="${this.getPhotoUrl(issue.photoPath)}" alt="Issue photo" />`
       : '';
   }
 
-  // Resolution photo (visible for both roles)
   if (resolutionPhotoPreview) {
     if (issue.status === 'resolved' && issue.resolutionPhotoPath) {
       resolutionPhotoPreview.style.display = 'block';
@@ -2228,18 +2222,51 @@ showIssueModal(issueId) {
   }
 
   if (this.currentRole === 'admin') {
-    // Show admin controls
     if (adminControls) adminControls.style.display = 'block';
 
-    // Recommended department based on category
     const recommended = this.getDepartmentForCategory(issue.category) || 'General Services';
     if (recChip) recChip.textContent = `Recommended: ${recommended}`;
 
-    // Populate department dropdown
     if (deptSelect) {
       if (!this.departments || this.departments.length === 0) {
         console.warn('No departments loaded, loading sample data');
-        this.loadSampleData();
+        if (!this.departments || this.departments.length === 0) {
+  console.warn('No departments loaded, loading sample departments');
+  this.departments = [
+    {
+      id: "public-works",
+      name: "Public Works Department",
+      categories: ["potholes", "roads", "infrastructure"],
+      responseTime: "0",
+      resolvedIssues: 0,
+      pendingIssues: 0
+    },
+    {
+      id: "sanitation",
+      name: "Sanitation Department", 
+      categories: ["garbage", "waste", "cleanliness"],
+      responseTime: "0",
+      resolvedIssues: 0,
+      pendingIssues: 0
+    },
+    {
+      id: "electrical",
+      name: "Electrical Department",
+      categories: ["streetlights", "power", "electrical"],
+      responseTime: "",
+      resolvedIssues: 0,
+      pendingIssues: 0
+    },
+    {
+      id: "traffic",
+      name: "Traffic Management",
+      categories: ["traffic", "signals", "transportation"],
+      responseTime: "",
+      resolvedIssues: 0,
+      pendingIssues: 0
+    }
+  ];
+}
       }
       const names = this.departments.map(d => d.name);
       const ordered = [recommended, ...names.filter(n => n !== recommended)];
@@ -2247,12 +2274,11 @@ showIssueModal(issueId) {
       deptSelect.value = issue.assignedTo || recommended;
     }
 
-    // Set current status
+
     if (statusSelect) {
       statusSelect.value = issue.status || 'submitted';
     }
 
-    // Store refs and attach a stable change handler (idempotent)
     this.currentModalElements = { statusSelect, resolutionPhotoGroup };
 
     if (statusSelect && !this.statusChangeHandler) {
@@ -2264,8 +2290,6 @@ showIssueModal(issueId) {
     }
 
     if (fileInput) fileInput.value = '';
-
-    // Save assignment button
     const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
     if (saveAssignmentBtn) {
       saveAssignmentBtn.onclick = async () => {
@@ -2294,7 +2318,6 @@ showIssueModal(issueId) {
       };
     }
 
-    // Save status button
     const saveStatusBtn = document.getElementById('saveStatusBtn');
     if (saveStatusBtn) {
       saveStatusBtn.onclick = async () => {
@@ -2342,11 +2365,9 @@ showIssueModal(issueId) {
       };
     }
   } else {
-    // Hide admin controls for citizen view
     if (adminControls) adminControls.style.display = 'none';
   }
 
-  // Finally open modal
   modal.classList.remove('hidden');
   document.body.classList.add('modal-open');
 }
@@ -2362,36 +2383,26 @@ togglePhotoInput() {
   resolutionPhotoGroup.style.display = shouldShow ? 'block' : 'none';
 }
 
-// Drop-in replacement
 closeModal() {
   const modal = document.getElementById('issueModal');
 
-  // Detach the exact same change handler reference, if any
   const els = this.currentModalElements;
   if (els?.statusSelect && this.statusChangeHandler) {
     els.statusSelect.removeEventListener('change', this.statusChangeHandler);
   }
 
-  // Also clear button handlers to avoid stale closures persisting across opens
   const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
   const saveStatusBtn = document.getElementById('saveStatusBtn');
   if (saveAssignmentBtn) saveAssignmentBtn.onclick = null;
   if (saveStatusBtn) saveStatusBtn.onclick = null;
 
-  // Clear stored refs
   this.currentModalElements = null;
 
-  // Hide modal and restore body state
   if (modal) modal.classList.add('hidden');
   document.body.classList.remove('modal-open');
 
-  // Hard-clean any dynamically injected duplicate modals if they linger
   document.querySelectorAll('.duplicate-modal').forEach(m => m.remove());
 }
-
-
-
-
 
     filterUserReports(status) {
         this.loadUserReports(status);

@@ -370,14 +370,13 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * c;
 }
 app.post('/api/issues/:id/upvote', authMiddleware, async (req, res) => {
-  try {
-    const issueId = req.params.id;
+try {
+    const issueId = BigInt(req.params.id);  
     const userId = req.user.id;
     
-    // Check if user already upvoted
     const existing = await prisma.upvote.findUnique({
       where: {
-        userId_issueId: { userId, issueId }
+        userId_issueId: { userId, issueId }  
       }
     });
     
@@ -385,13 +384,12 @@ app.post('/api/issues/:id/upvote', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Already upvoted' });
     }
     
-    // Create upvote and increment counter
-    await prisma.$transaction([
+  await prisma.$transaction([
       prisma.upvote.create({
-        data: { userId, issueId }
+        data: { userId, issueId }  
       }),
       prisma.issue.update({
-        where: { id: issueId },
+        where: { id: issueId }, 
         data: { upvotes: { increment: 1 } }
       })
     ]);
@@ -434,6 +432,7 @@ app.patch('/api/issues/:id', authMiddleware, upload.single('resolutionPhoto'), a
         if (req.user.role !== 'admin' && parsed.data.status) {
             return res.status(403).json({ error: 'Admin access required for status updates' });
         }
+        const id = BigInt(req.params.id);
 
         const updateData = { ...parsed.data };
         if (req.file) {
@@ -442,11 +441,11 @@ app.patch('/api/issues/:id', authMiddleware, upload.single('resolutionPhoto'), a
 
         console.log('Final Update Data:', JSON.stringify(updateData, null, 2));
 
-        const issue = await prisma.issue.update({
-            where: { id: req.params.id },
-            data: updateData,
-            include: { user: { select: { email: true } } }
-        });
+       const issue = await prisma.issue.update({
+      where: { id },  
+      data: updateData,
+      include: { user: { select: { email: true } } }
+    });
 
         console.log('Updated Issue Result:', JSON.stringify(issue, null, 2));
         return res.json(issue);
@@ -530,9 +529,10 @@ app.get('/api/analytics/issues-over-time', authMiddleware, async (req, res) => {
 
 
 app.get('/api/issues/:id', authMiddleware, async (req, res) => {
-  try {
+try {
+    const id = BigInt(req.params.id); 
     const issue = await prisma.issue.findUnique({
-      where: { id: req.params.id },
+      where: { id },  
       include: {
         user: {
           select: { email: true }
