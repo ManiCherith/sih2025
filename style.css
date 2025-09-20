@@ -1238,7 +1238,7 @@ select.form-control {
 }
 
 .table-row {
-  padding: var(--space-16);
+  padding: 24px var(--space-16); 
   border-bottom: 1px solid var(--color-card-border-inner);
   display: grid;
   grid-template-columns: 1fr 150px 120px 120px 100px 120px;
@@ -1246,6 +1246,7 @@ select.form-control {
   align-items: center;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard);
+  font-size: 18px; 
 }
 
 .table-row:hover {
@@ -1256,6 +1257,12 @@ select.form-control {
   border-bottom: none;
 }
 
+.issues-table-container {
+  max-height: calc(6 * (24px * 2 + 1px)); 
+  display: block;
+}
+
+
 .issue-summary {
   display: flex;
   flex-direction: column;
@@ -1263,12 +1270,13 @@ select.form-control {
 }
 
 .issue-title-small {
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
+  font-size: 1.75rem; 
+  font-weight: 600;
 }
 
+
 .issue-description-small {
-  font-size: var(--font-size-xs);
+  font-size: 1.5rem;
   color: var(--color-text-secondary);
   line-height: 1.3;
   display: -webkit-box;
@@ -2343,4 +2351,11 @@ body.modal-open { overflow: hidden; }
   margin-top: 20px;
   border-top: 1px solid #eee;
   padding-top: 20px;
+}
+#citizenDashboard, #adminDashboard {
+  display: none;
+}
+
+.hidden {
+  display: none !important;
 }

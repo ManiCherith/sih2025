@@ -229,15 +229,18 @@ app.post('/auth/logout', (req, res) => {
   });
   res.status(204).send();
 });
+
 app.get('/profile', authMiddleware, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ error: 'User not found' });
     return res.json({ id: user.id, email: user.email, role: user.role });
   } catch (e) {
+    logger.error(`Profile fetch error for user ${req.user.id}: ${e.stack || e}`);
     return res.status(500).json({ error: 'Unexpected error' });
   }
 });
+
 app.get('/api/issues', authMiddleware, async (req, res) => {
   try {
     let whereClause = {};
@@ -246,12 +249,11 @@ app.get('/api/issues', authMiddleware, async (req, res) => {
       whereClause = { userId: req.user.id };
     }
     
-const issues = await prisma.issue.findMany({
-  where: whereClause,
-  include: { user: { select: { email: true } } },
-  orderBy: { createdAt: 'desc' }
-});
-
+    const issues = await prisma.issue.findMany({
+      where: whereClause,
+      include: { user: { select: { email: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
     
     logger.info(`User ${req.user.id} (${req.user.role}) fetched ${issues.length} issues`);
     
@@ -371,7 +373,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 }
 app.post('/api/issues/:id/upvote', authMiddleware, async (req, res) => {
 try {
-    const issueId = BigInt(req.params.id);  
+    const issueId = (req.params.id);  
     const userId = req.user.id;
     
     const existing = await prisma.upvote.findUnique({
@@ -432,7 +434,7 @@ app.patch('/api/issues/:id', authMiddleware, upload.single('resolutionPhoto'), a
         if (req.user.role !== 'admin' && parsed.data.status) {
             return res.status(403).json({ error: 'Admin access required for status updates' });
         }
-        const id = BigInt(req.params.id);
+        const id = req.params.id; 
 
         const updateData = { ...parsed.data };
         if (req.file) {
@@ -530,7 +532,7 @@ app.get('/api/analytics/issues-over-time', authMiddleware, async (req, res) => {
 
 app.get('/api/issues/:id', authMiddleware, async (req, res) => {
 try {
-    const id = BigInt(req.params.id); 
+    const id = (req.params.id); 
     const issue = await prisma.issue.findUnique({
       where: { id },  
       include: {

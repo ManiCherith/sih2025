@@ -1,6 +1,145 @@
 console.log('app.js loaded');
 const backendUrl = "http://localhost:3443";
 class SkunkWorks{
+translations = {
+    en: {
+
+        siteTitle: "SkunkWorksPrototype1",
+        tagline: "Connecting Citizens & Government",
+        backToHome: "Back to Home",
+
+        heroTitle: "Report. Track. Resolve.",
+        heroSubtitle: "Help improve your community by reporting civic issues and tracking their resolution.",
+        citizenRole: "I'm a Citizen",
+        citizenRoleDesc: "Report issues, track progress, and engage with your community",
+        adminRole: "I'm an Administrator", 
+        adminRoleDesc: "Manage issues and route to departments",
+        login: "Login",
+        signUp: "Sign Up",
+        accessDashboard: "Access Dashboard",
+        
+        issuesReported: "Issues Reported",
+        issuesResolved: "Issues Resolved", 
+        avgResolutionTime: "Avg Resolution Time",
+        citizenSatisfaction: "Citizen Satisfaction",
+
+        reportIssue: "Report Issue",
+        myReports: "My Reports",
+        communityMap: "Community Map", 
+        community: "Community",
+        overview: "Overview",
+        manageIssues: "Manage Issues",
+        departments: "Departments",
+        analytics: "Analytics",
+        mapView: "Map View",
+
+        issueCategory: "Issue Category",
+        title: "Title",
+        description: "Description",
+        location: "Location",
+        priorityLevel: "Priority Level",
+        photo: "Photo (Optional)",
+        useMyLocation: "Use My Location",
+        submitReport: "Submit Report",
+
+        potholes: "Potholes & Road Issues",
+        streetlights: "Streetlights",
+        garbage: "Garbage & Waste",
+        drainage: "Drainage Issues", 
+        traffic: "Traffic & Signals",
+        vandalism: "Vandalism",
+        noise: "Noise Complaints",
+        parks: "Parks & Recreation",
+
+        low: "Low - Can wait a few weeks",
+        medium: "Medium - Should be addressed soon", 
+        high: "High - Needs prompt attention",
+        urgent: "Urgent - Safety hazard",
+        
+        submitted: "Submitted",
+        assigned: "Assigned", 
+        inProgress: "In Progress",
+        resolved: "Resolved",
+        
+        category: "Category",
+        priority: "Priority",
+        status: "Status", 
+        date: "Date",
+        assignedTo: "Assigned To",
+        upvotes: "Upvotes",
+        noPhoto: "No Photo",
+        unassigned: "Unassigned"
+    },
+    
+    hi: {
+        siteTitle: "स्कंकवर्क्सप्रोटोटाइप1",
+        tagline: "नागरिकों और सरकार को जोड़ना",
+        backToHome: "घर वापस",
+        
+        heroTitle: "रिपोर्ट करें। ट्रैक करें। हल करें।",
+        heroSubtitle: "नागरिक मुद्दों की रिपोर्ट करके और उनके समाधान को ट्रैक करके अपने समुदाय को बेहतर बनाने में मदद करें।",
+        citizenRole: "मैं एक नागरिक हूं",
+        citizenRoleDesc: "मुद्दों की रिपोर्ट करें, प्रगति को ट्रैक करें, और अपने समुदाय के साथ जुड़ें",
+        adminRole: "मैं एक प्रशासक हूं",
+        adminRoleDesc: "मुद्दों का प्रबंधन करें और विभागों को भेजें",
+        login: "लॉगिन",
+        signUp: "साइन अप",
+        accessDashboard: "डैशबोर्ड एक्सेस करें",
+        
+        issuesReported: "रिपोर्ट किए गए मुद्दे",
+        issuesResolved: "हल किए गए मुद्दे",
+        avgResolutionTime: "औसत समाधान समय", 
+        citizenSatisfaction: "नागरिक संतुष्टि",
+
+        reportIssue: "मुद्दा रिपोर्ट करें",
+        myReports: "मेरी रिपोर्टें",
+        communityMap: "समुदायिक मानचित्र",
+        community: "समुदाय", 
+        overview: "अवलोकन",
+        manageIssues: "मुद्दों का प्रबंधन",
+        departments: "विभाग",
+        analytics: "विश्लेषण",
+        mapView: "मानचित्र दृश्य",
+        
+        issueCategory: "मुद्दे की श्रेणी",
+        title: "शीर्षक", 
+        description: "विवरण",
+        location: "स्थान",
+        priorityLevel: "प्राथमिकता स्तर",
+        photo: "फोटो (वैकल्पिक)",
+        useMyLocation: "मेरा स्थान उपयोग करें",
+        submitReport: "रिपोर्ट सबमिट करें",
+        
+        potholes: "गड्ढे और सड़क के मुद्दे",
+        streetlights: "स्ट्रीटलाइट",
+        garbage: "कचरा और अपशिष्ट",
+        drainage: "जल निकासी के मुद्दे",
+        traffic: "यातायात और सिग्नल", 
+        vandalism: "बर्बरता",
+        noise: "शोर की शिकायत",
+        parks: "पार्क और मनोरंजन",
+        
+        low: "कम - कुछ सप्ताह प्रतीक्षा कर सकते हैं",
+        medium: "मध्यम - जल्दी संबोधित किया जाना चाहिए",
+        high: "उच्च - तत्काल ध्यान की आवश्यकता",
+        urgent: "अत्यावश्यक - सुरक्षा खतरा",
+        
+        submitted: "सबमिट किया गया", 
+        assigned: "असाइन किया गया",
+        inProgress: "प्रगति में",
+        resolved: "हल हो गया",
+        
+        category: "श्रेणी",
+        priority: "प्राथमिकता",
+        status: "स्थिति",
+        date: "दिनांक", 
+        assignedTo: "को सौंपा गया",
+        upvotes: "अपवोट्स",
+        noPhoto: "कोई फोटो नहीं",
+        unassigned: "असाइन नहीं किया गया"
+    }
+};
+
     constructor() {
         this.currentRole = null;
         this.currentTab = null;
@@ -8,7 +147,8 @@ class SkunkWorks{
         this.departments = [];
         this.analytics = {};
         this.userReports = [];
-        this.currentLanguage = 'en';
+        this.currentLanguage = localStorage.getItem('civicconnect-language') || 'en';
+        this.isTogglingLanguage = false;
         this.theme = 'light';
         this.accessToken = localStorage.getItem('civicconnect_token') || null;
         this.currentModalElements = null;
@@ -26,6 +166,8 @@ async init() {
   this.setupEventListeners();
   this.setupNavigation();
   this.setupTheme();
+this.applyTranslations();
+
 
   const isAuthenticated = await this.checkAuthStatus();
   if (!isAuthenticated) {
@@ -33,22 +175,50 @@ async init() {
     return;
   }
 
+  try {
+    if (typeof this.loadDashboardOverview === 'function') {
+      await this.loadDashboardOverview();
+    } else {
+      await Promise.all([
+        this.loadIssuesFromAPI(),
+        this.loadAnalytics()
+      ]);
+      this.updateOverviewStats();
+      if (typeof this.renderAllCharts === 'function') await this.renderAllCharts();
+    }
+  } catch (err) {
+    console.error('Dashboard init error (issues/analytics):', err);
+    this.updateOverviewStats();
+  }
+
+  this.startRealTimeUpdates();
+
   document.getElementById('btnGenerateReport').addEventListener('click', async () => {
-    await this.renderIssuesByStatusChart();
-    await this.renderIssuesByCategoryChart();
-    await this.renderIssuesByPriorityChart();
-    await this.renderAverageResolutionTime();
-    await this.renderIssuesOverTimeChart();
-    
+    try {
+      if (typeof this.loadDashboardOverview === 'function') {
+        await this.loadDashboardOverview();
+      } else {
+        await Promise.all([
+          this.loadIssuesFromAPI(),
+          this.loadAnalytics()
+        ]);
+        this.updateOverviewStats();
+        if (typeof this.renderAllCharts === 'function') await this.renderAllCharts();
+      }
+    } catch (e) {
+      console.error('Generate report failed:', e);
+      this.updateOverviewStats();
+    }
   });
-  await this.loadAnalytics();
+}
+
+
+async renderAllCharts() {
   await this.renderIssuesByCategoryChart();
   await this.renderIssuesByStatusChart();
   await this.renderIssuesByPriorityChart();
   await this.renderAverageResolutionTime();
   await this.renderIssuesOverTimeChart();
-
-  this.startRealTimeUpdates();
 }
 
 _renderIssueMarkers(map) {
@@ -274,10 +444,10 @@ renderHeatmap(map, heatmapData) {
             id: "test1",
             title: "Test Issue 1",
             location: "Location A",
-            status: "submitted",        // Changed from "open"
-            assignedTo: null,           // Added explicitly
-            category: "potholes",       // Added category
-            priority: "medium",         // Added priority
+            status: "submitted",       
+            assignedTo: null,          
+            category: "potholes",       
+            priority: "medium",         
             description: "Test description for issue 1",
             submittedBy: "test@example.com",
             submittedDate: new Date().toISOString(),
@@ -425,6 +595,13 @@ renderHeatmap(map, heatmapData) {
     this.selectRole('admin');
     return;
   }
+const languageToggleBtn = document.getElementById('languageToggle');
+if (languageToggleBtn && !languageToggleBtn.hasListener) {
+    languageToggleBtn.addEventListener('click', this.toggleLanguage.bind(this));
+    languageToggleBtn.hasListener = true;
+}
+
+
 
              const citizenLoginForm = document.getElementById('citizenLoginForm');
   if (citizenLoginForm && !citizenLoginForm.hasListener) {
@@ -821,7 +998,7 @@ async handleSignup(email, password, confirmPassword) {
     errorElement.textContent = error.message;
   }
 }
-setupNavigationHistory() {
+setupNavigation() {
     window.addEventListener('popstate', (event) => {
         console.log('Navigation event:', event.state);
         
@@ -1349,7 +1526,7 @@ if (tabName === 'analytics') {
         }
     }
 
-    loadAdminTab(tabName) {
+   async loadAdminTab(tabName) {
         const tabElement = document.getElementById(`${tabName}Tab`);
         if (tabElement) {
             tabElement.classList.add('active');
@@ -1357,19 +1534,19 @@ if (tabName === 'analytics') {
 
         switch (tabName) {
             case 'overview':
-                this.loadDashboardOverview();
+               await this.loadDashboardOverview();
                 break;
             case 'manage':
-                this.loadIssueManagement();
+               await this.loadIssueManagement();
                 break;
             case 'departments':
-                this.loadDepartments();
+               await this.loadDepartments();
                 break;
             case 'analytics':
-                this.loadAnalytics();
+               await this.loadAnalytics();
                 break;
             case 'admin-map':
-                this.loadAdminMap();
+              await  this.loadAdminMap();
                 break;
         }
     }
@@ -1857,27 +2034,78 @@ loadAdminMap() {
     }
 
     loadAdminDashboard() {
-        this.updateDashboardMetrics();
+        this.loadAnalytics();
+        this.updateOverviewStats();
     }
 
-    loadDashboardOverview() {
-        this.updateDashboardMetrics();
-        setTimeout(() => {
-            this.loadDashboardCharts();
-        }, 100);
+async loadDashboardOverview() {
+    await Promise.all([
+        this.loadIssuesFromAPI(),
+        this.loadAnalytics()
+    ]);
+    this.updateOverviewStats();
+    setTimeout(() => this.loadDashboardCharts(), 100);
+}
+
+
+updateOverviewStats() {
+    const totalIssuesEl = document.getElementById('totalIssuesMetric');
+    const pendingIssuesEl = document.getElementById('pendingIssuesMetric');
+    const avgResponseEl = document.getElementById('avgResponseMetric');
+    const satisfactionEl = document.getElementById('satisfactionMetric');
+
+    // Primary: sum counts from analytics.byCategory if present and valid
+    let totalIssues = 0;
+    if (this.analytics && Array.isArray(this.analytics.byCategory) && this.analytics.byCategory.length) {
+        totalIssues = this.analytics.byCategory.reduce((sum, group) => {
+            const count = (group && (group.count || group.total || (typeof group === 'number' ? group : 0))) || 0;
+            return sum + (Number.isFinite(count) ? Number(count) : 0);
+        }, 0);
     }
 
-    updateDashboardMetrics() {
-        const totalIssuesEl = document.getElementById('totalIssuesMetric');
-        const pendingIssuesEl = document.getElementById('pendingIssuesMetric');
-        const avgResponseEl = document.getElementById('avgResponseMetric');
-        const satisfactionEl = document.getElementById('satisfactionMetric');
-
-        if (totalIssuesEl) totalIssuesEl.textContent = this.analytics.totalIssues.toLocaleString();
-        if (pendingIssuesEl) pendingIssuesEl.textContent = (this.analytics.totalIssues - this.analytics.resolvedIssues).toLocaleString();
-        if (avgResponseEl) avgResponseEl.textContent = this.analytics.avgResolutionTime;
-        if (satisfactionEl) satisfactionEl.textContent = this.analytics.citizenSatisfaction + '★';
+    // Fallback 1: analytics.totalIssues (set by calculateAnalytics)
+    if ((!totalIssues || totalIssues === 0) && this.analytics && Number.isFinite(this.analytics.totalIssues)) {
+        totalIssues = this.analytics.totalIssues;
     }
+
+    // Fallback 2: direct count from loaded issues
+    if ((!totalIssues || totalIssues === 0) && Array.isArray(this.issues)) {
+        totalIssues = this.issues.length;
+    }
+
+    if (totalIssuesEl) {
+        totalIssuesEl.textContent = totalIssues;
+    }
+
+    let pendingIssues = 0;
+    if (this.analytics && Array.isArray(this.analytics.byStatus) && this.analytics.byStatus.length) {
+        pendingIssues = this.analytics.byStatus.reduce((sum, group) => {
+            const isResolved = (group && (group.status === 'resolved' || group._id === 'resolved')) || false;
+            const count = (group && (group.count || group.total || (typeof group === 'number' ? group : 0))) || 0;
+            return sum + (isResolved ? 0 : (Number.isFinite(count) ? Number(count) : 0));
+        }, 0);
+    } else if (Array.isArray(this.issues)) {
+        pendingIssues = this.issues.filter(issue => (issue.status || '').toLowerCase() !== 'resolved').length;
+    }
+
+    if (pendingIssuesEl) {
+        pendingIssuesEl.textContent = pendingIssues;
+    }
+
+    const avgHours =
+        (this.analytics && (this.analytics.averageResolutionHours || (this.analytics.averageResolution && this.analytics.averageResolution.averageResolutionHours))) ||
+        (this.analytics && this.analytics.avgResolutionTime) ||
+        null;
+    if (avgResponseEl) {
+        avgResponseEl.textContent = avgHours ? `${Math.round(avgHours)} hours` : 'N/A';
+    }
+
+    if (satisfactionEl) {
+        satisfactionEl.textContent = this.analytics && this.analytics.satisfactionScore ? `${this.analytics.satisfactionScore}%` : 'N/A';
+    }
+}
+
+
 
     loadDashboardCharts() {
         const trendsCtx = document.getElementById('trendsChart');
@@ -2058,23 +2286,25 @@ container.innerHTML = `
 async loadAnalytics() {
   try {
     const headers = { Authorization: `Bearer ${this.accessToken}` };
-    
-    const categoryRes = await fetch(`${backendUrl}/api/analytics/issues-by-category`, { headers });
-    this.analytics.byCategory = await categoryRes.json();
-    
-    const statusRes = await fetch(`${backendUrl}/api/analytics/issues-by-status`, { headers });
-    this.analytics.byStatus = await statusRes.json();
-    
-    const priorityRes = await fetch(`${backendUrl}/api/analytics/issues-by-priority`, { headers });
-    this.analytics.byPriority = await priorityRes.json();
-    
-    const avgRes = await fetch(`${backendUrl}/api/analytics/average-resolution-time`, { headers });
-    this.analytics.averageResolution = await avgRes.json();
 
-    const overTimeRes = await fetch(`${backendUrl}/api/analytics/issues-over-time`, { headers });
-    this.analytics.overTime = await overTimeRes.json();
-  } catch (error) {
-    console.error('Failed to load analytics:', error);
+    const [byCategory, byStatus, byPriority, avgTime, overTime] = await Promise.all([
+      fetch(`${backendUrl}/api/analytics/issues-by-category`, { headers }).then(res => res.json()),
+      fetch(`${backendUrl}/api/analytics/issues-by-status`, { headers }).then(res => res.json()),
+      fetch(`${backendUrl}/api/analytics/issues-by-priority`, { headers }).then(res => res.json()),
+      fetch(`${backendUrl}/api/analytics/average-resolution-time`, { headers }).then(res => res.json()),
+      fetch(`${backendUrl}/api/analytics/issues-over-time`, { headers }).then(res => res.json())
+    ]);
+
+    this.analytics = {
+      byCategory,
+      byStatus,
+      byPriority,
+      averageResolutionHours: avgTime.averageResolutionHours || null,
+      overTime
+    };
+  } catch (e) {
+    console.error('Failed to load analytics:', e);
+    this.analytics = {};
   }
 }
 
@@ -2503,15 +2733,187 @@ clearMapFilters() {
         'info'
     );
 }
+toggleLanguage() {
+    if (this.isTogglingLanguage) return;
+    this.isTogglingLanguage = true;
 
-    toggleLanguage() {
-        this.currentLanguage = this.currentLanguage === 'en' ? 'hin' : 'en';
-        const langBtn = document.getElementById('languageToggle');
-        if (langBtn) {
-            langBtn.textContent = `🌐 ${this.currentLanguage.toUpperCase()}`;
-        }
-        this.showNotification(`Language switched to ${this.currentLanguage === 'en' ? 'English' : 'Hindi'}`, 'info');
+    this.currentLanguage = this.currentLanguage === 'en' ? 'hi' : 'en';
+    localStorage.setItem('civicconnect-language', this.currentLanguage);
+
+    const langBtn = document.getElementById('languageToggle');
+    if (langBtn) {
+        langBtn.textContent = this.currentLanguage.toUpperCase();
     }
+
+    this.applyTranslations();
+
+    this.showNotification(`Language switched to ${this.currentLanguage === 'en' ? 'English' : 'Hindi'}`, 'info');
+
+    setTimeout(() => {
+        this.isTogglingLanguage = false;
+    }, 300);
+}
+
+
+applyTranslations() {
+    const t = this.translations[this.currentLanguage]; 
+    
+    const siteTitle = document.querySelector('.logo h1');
+    if (siteTitle) siteTitle.textContent = t.siteTitle;
+    
+    const tagline = document.querySelector('.tagline');
+    if (tagline) tagline.textContent = t.tagline;
+    
+    const backToHome = document.getElementById('backToHome');
+    if (backToHome) backToHome.textContent = t.backToHome;
+    
+    const heroTitle = document.querySelector('.hero h2');
+    if (heroTitle) heroTitle.textContent = t.heroTitle;
+    
+    const heroSubtitle = document.querySelector('.hero p');
+    if (heroSubtitle) heroSubtitle.textContent = t.heroSubtitle;
+    
+    const citizenRole = document.querySelector('.role-card h3');
+    if (citizenRole) citizenRole.textContent = t.citizenRole;
+    
+    const citizenRoleDesc = document.querySelector('.role-card p');
+    if (citizenRoleDesc) citizenRoleDesc.textContent = t.citizenRoleDesc;
+    
+    const adminRole = document.querySelector('#adminRole h3');
+    if (adminRole) adminRole.textContent = t.adminRole;
+    
+    const adminRoleDesc = document.querySelector('#adminRole p');
+    if (adminRoleDesc) adminRoleDesc.textContent = t.adminRoleDesc;
+    
+    const loginBtns = document.querySelectorAll('button');
+    loginBtns.forEach(btn => {
+        if (btn.textContent.includes('Login') || btn.textContent.includes('लॉगिन')) {
+            btn.textContent = t.login;
+        } else if (btn.textContent.includes('Sign Up') || btn.textContent.includes('साइन अप')) {
+            btn.textContent = t.signUp;
+        } else if (btn.textContent.includes('Access Dashboard') || btn.textContent.includes('डैशबोर्ड एक्सेस')) {
+            btn.textContent = t.accessDashboard;
+        }
+    });
+    
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        const tabName = btn.getAttribute('data-tab');
+        switch(tabName) {
+            case 'report':
+                btn.textContent = t.reportIssue;
+                break;
+            case 'track':
+                btn.textContent = t.myReports;
+                break;
+            case 'map':
+                btn.textContent = t.communityMap;
+                break;
+            case 'engage':
+                btn.textContent = t.community;
+                break;
+            case 'overview':
+                btn.textContent = t.overview;
+                break;
+            case 'manage':
+                btn.textContent = t.manageIssues;
+                break;
+            case 'departments':
+                btn.textContent = t.departments;
+                break;
+            case 'analytics':
+                btn.textContent = t.analytics;
+                break;
+            case 'admin-map':
+                btn.textContent = t.mapView;
+                break;
+        }
+    });
+    
+    const labels = document.querySelectorAll('.form-label');
+    labels.forEach(label => {
+        const labelFor = label.getAttribute('for');
+        switch(labelFor) {
+            case 'issueCategory':
+                label.textContent = t.issueCategory;
+                break;
+            case 'issueTitle':
+                label.textContent = t.title;
+                break;
+            case 'issueDescription':
+                label.textContent = t.description;
+                break;
+            case 'issueLocation':
+                label.textContent = t.location;
+                break;
+            case 'issuePriority':
+                label.textContent = t.priorityLevel;
+                break;
+        }
+    });
+    const categorySelect = document.getElementById('issueCategory');
+    if (categorySelect) {
+        const options = categorySelect.querySelectorAll('option');
+        options.forEach(option => {
+            switch(option.value) {
+                case 'potholes':
+                    option.textContent = t.potholes;
+                    break;
+                case 'streetlights':
+                    option.textContent = t.streetlights;
+                    break;
+                case 'garbage':
+                    option.textContent = t.garbage;
+                    break;
+                case 'drainage':
+                    option.textContent = t.drainage;
+                    break;
+                case 'traffic':
+                    option.textContent = t.traffic;
+                    break;
+                case 'vandalism':
+                    option.textContent = t.vandalism;
+                    break;
+                case 'noise':
+                    option.textContent = t.noise;
+                    break;
+                case 'parks':
+                    option.textContent = t.parks;
+                    break;
+            }
+        });
+    }
+    
+    const prioritySelect = document.getElementById('issuePriority');
+    if (prioritySelect) {
+        const options = prioritySelect.querySelectorAll('option');
+        options.forEach(option => {
+            switch(option.value) {
+                case 'low':
+                    option.textContent = t.low;
+                    break;
+                case 'medium':
+                    option.textContent = t.medium;
+                    break;
+                case 'high':
+                    option.textContent = t.high;
+                    break;
+                case 'urgent':
+                    option.textContent = t.urgent;
+                    break;
+            }
+        });
+    }
+    
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.textContent.includes('Submit Report')) {
+        submitBtn.textContent = t.submitReport;
+    }
+    
+      const gpsBtn = document.getElementById('useGPSLocation');
+    if (gpsBtn) gpsBtn.textContent = t.useMyLocation;
+}
+
 
 
 setupTheme() {
